@@ -241,7 +241,7 @@ namespace SaltGlory {
         $"hull={player.hull:F0} sails={player.sails:F0} crew={player.crew:F0} enemyHull={(encActive ? enemy.hull : 0f):F0} gold={career.gold} hold={career.Hold} port={(np != null ? np.name : "-")} " +
         $"rep={career.rep[0]},{career.rep[1]},{career.rep[2]},{career.rep[3]} marque={career.marque} x={player.Pos.x:F0} z={player.Pos.z:F0} ex={enemy.Pos.x:F0} ez={enemy.Pos.z:F0} " +
         $"cls={player.cls} ecls={enemy.cls} ecrew={enemy.crew:F0} fame={career.fame} pieces={career.mapPieces} dig={(career.digActive ? 1 : 0)} digx={career.digX:F0} digz={career.digZ:F0} " +
-        $"board={(CanBoard() ? 1 : 0)} ask={(boardAsk ? 1 : 0)} duel={(state == State.Duel ? 1 : 0)} {DuelStatus()}");
+        $"board={(CanBoard() ? 1 : 0)} ask={(boardAsk ? 1 : 0)} duel={(state == State.Duel ? 1 : 0)} windTo={Mathf.Repeat(windFrom + 180f, 360f):F1} needle={(Skin ? WindToWorld : Mathf.Repeat(windFrom + 180f, 360f)):F1} {DuelStatus()}");
     }
     /// <summary>QA-only: spawn a ship alongside to starboard. spec = "role,class,nation,metres,hostile(0/1),board(0/1)", role is
     /// merchant / warship / pirate / treasure.</summary>
@@ -663,7 +663,7 @@ namespace SaltGlory {
       bool portUp = Mathf.Abs(Mathf.DeltaAngle(Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, windFrom)) < 45f && d.magnitude > 120f;
       var r = new Rect(W / 2f - 270 * s, 94 * s, 540 * s, 52 * s); Box(r, new Color(0.25f, 0.17f, 0.08f, 0.85f));
       Label(new Rect(r.x + 10 * s, r.y + 4 * s, r.width - 20 * s, r.height - 8 * s), (off < 30f ? "In irons: the wind is dead ahead. " : "Too close to the wind. ") +
-        (portUp ? $"{near.name} is upwind: zig-zag (tack) across the wind to reach it." : (Skin ? "Bear away until the gauge needle points out to the side." : "Bear away until the blue wind arrow is more across your course.")), new GUIStyle(small){ wordWrap = true }, Parchment);
+        (portUp ? $"{near.name} is upwind: zig-zag (tack) across the wind to reach it." : (Skin ? "The WIND arrow points back at your stern: bear away until it points out across your side." : "Bear away until the blue wind arrow is more across your course.")), new GUIStyle(small){ wordWrap = true }, Parchment);
     }
     void DrawFire(Rect r, string label, float ready){
       float left = ready - Time.time; Box(r, Panel);

@@ -46,7 +46,8 @@ namespace SaltGlory {
       Label(lr, label, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, wordWrap = true, fontSize = Mathf.RoundToInt(Mathf.Min(18f, r.height * 0.32f)) }, Ink);
     }
 
-    // ---------- the wind / sail gauge (top right): needle = where the wind blows TO, relative to the bow (dial top) ----------
+    // ---------- the wind / sail gauge (top right): post-launch, the needle is a WIND arrow that points where the wind blows TO
+    // on the screen / chart (north up, like the camera and the map), not relative to the bow, so it reads at a glance ----------
     Texture2D sailCut; Color32[] sailSrc; float sailCutAt = -1f;
     /// <summary>Radial 360 fill from the bottom, clockwise (as Image Filled would), baked into a copy when the sail setting moves.</summary>
     Texture2D SailFill(float f){
@@ -61,6 +62,7 @@ namespace SaltGlory {
       sailCut.SetPixels32(px); sailCut.Apply(); sailCutAt = f; return sailCut;
     }
     float WindBearing => Mathf.DeltaAngle(player.heading, windFrom + 180f);   // where the wind blows to, off the bow (+ starboard)
+    float WindToWorld => Mathf.Repeat(windFrom + 180f, 360f);   // where the wind blows to, clockwise from screen-up (north)
 
     /// <summary>The skinned sea HUD (status bars, readouts, gauge, met ship, top buttons, fire buttons, shot slots).</summary>
     void SkinHud(float s, float W, float H){
@@ -74,9 +76,12 @@ namespace SaltGlory {
       var gr = new Rect(RW - 24 - 180, 24, 180, 180);
       GUI.DrawTexture(gr, gaugeFrameTex); var sf = SailFill(player.sail); if (sf) GUI.DrawTexture(gr, sf);
       if (gaugeNeedleTex){
-        float k = 180f / 256f; var mm = GUI.matrix; GUIUtility.RotateAroundPivot(WindBearing, new Vector2(gr.center.x * s, gr.center.y * s));
+        float k = 180f / 256f; var mm = GUI.matrix; GUIUtility.RotateAroundPivot(WindToWorld, new Vector2(gr.center.x * s, gr.center.y * s));
         GUI.DrawTexture(new Rect(gr.center.x - 20f * k, gr.center.y - 92f * k, 40f * k, 184f * k), gaugeNeedleTex); GUI.matrix = mm;
       }
+      // a clear WIND label on a small plaque just under the dial's top edge (left of the needle's hub)
+      { var ws = new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 14 }; var wr = new Rect(gr.x - 66, gr.y + 4, 62, 24);
+        Box(wr, new Color(0.08f, 0.06f, 0.04f, 0.7f)); Label(wr, "WIND", ws, Parchment); }
       float eff = Ship.WindFactor(player.OffWind(windFrom));
       var cap = new GUIStyle(small){ alignment = TextAnchor.UpperRight, fontStyle = FontStyle.Bold, fontSize = 15 };
       string l1 = $"{Ship.PointOfSail(player.OffWind(windFrom))} {eff * 100f:F0}%   {player.speed * 1.2f:F1} kn", l2 = $"Sails set {player.sail * 100f:F0}%   canvas {player.sails:F0}/100";

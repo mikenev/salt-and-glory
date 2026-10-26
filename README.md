@@ -11,7 +11,7 @@ A captain's career in the Caribbean, 1660: trade between ports, fight broadside 
   - **Merchant:** trade. Prices move as you buy and sell, then settle back over a few minutes.
   - **Shipwright:** repairs, and refits into the Sloop, Brigantine, Fluyt, Frigate or Galleon. A trade-in pays 75% of what your ship is worth as she is, or 45% for a captured prize.
   - You can also save your game and read the **Captain's log**.
-- **Wind:** the needle on the gauge (top right) points where the wind blows, relative to your bow. Pointed too close to the wind you stall ("in irons"). To reach a port that is upwind, zig-zag (tack) across the wind. A hint appears when you need it.
+- **Wind:** the WIND arrow on the gauge (top right) points the way the wind blows, on the screen and chart (north is up, like the map). It doesn't turn with your ship. Sail with the arrow across your side or behind you. If it points back at your stern, you are too close to the wind. Pointed too close to the wind you stall ("in irons"). To reach a port that is upwind, zig-zag (tack) across the wind. A hint appears when you need it.
 - **Battles:** fire broadsides from either side, and switch between round shot (hull), chain shot (sails) and grape shot (crew). Attacking a ship of a nation your patron is at war with is lawful. Otherwise it's piracy, and that nation remembers.
 - **Boarding:** come alongside and press Enter / A / tap the prompt. If the ship hasn't fired on you, you're asked first. Then duel her captain on deck:
   - Attacks go high, mid or low. A high attack gets past a low guard, and a low attack gets past a high guard.
@@ -31,9 +31,21 @@ A captain's career in the Caribbean, 1660: trade between ports, fight broadside 
 | Shot type | Tab | Y | Shot slots (bottom) |
 | Dock, board, dig | Enter | A | The prompt button |
 | Map / log / pause | M / L / Esc or P | Back (Select) / D-pad up / Start | MAP / LOG / II buttons |
-| Duel: step | A / D | Stick / D-pad left-right | Drag on the left 30% of the screen |
-| Duel: attack | J (hold W for high, S for low) | X (stick up = high, down = low) | Swipe up / across / down, or the High / Mid / Low buttons |
-| Duel: block / parry | Hold K / tap K just before a hit | Hold B / tap B | Hold / tap, or hold the Block button |
+| Duel: step | Numpad / number row 4 back, 9 or 3 forward; or A / D | Stick / D-pad left-right | Drag on the left 30% of the screen |
+| Duel: attack | Numpad / number row 8 high, 6 mid, 2 low; or J (hold W for high, S for low) | X (stick up = high, down = low) | Swipe up / across / down, or the High / Mid / Low buttons |
+| Duel: block / parry | Numpad / number row hold 5 (tap just before a hit = parry), 7 guard high, 1 guard low; or hold / tap K | Hold B / tap B | Hold / tap, or hold the Block button |
+
+### Duel numpad
+
+The same layout works on the numpad and on the number row (1 to 9) for laptops. Rows are heights, and your foe is on the right:
+
+| | | |
+|---|---|---|
+| **7** guard high | **8** cut high | **9** step forward |
+| **4** step back | **5** block (tap just before a hit = parry) | **6** thrust mid |
+| **1** guard low | **2** cut low | **3** step forward |
+
+Blocks and steps last as long as you hold the key; attacks fire when you press it. A mid block (5) stops a cut at any height. Guarding at the same height as the cut (7 against a high cut, 1 against a low one) means you are pushed back less. A high guard does not stop a low cut, and a low guard does not stop a high one.
 
 ## Building
 
