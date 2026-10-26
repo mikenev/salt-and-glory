@@ -1,0 +1,22 @@
+{
+ "size": [
+  1280,
+  720
+ ],
+ "type": "full-screen background (not 9-slice)",
+ "text_areas_top_left_origin": {
+  "left_page": [
+   285,
+   70,
+   640,
+   560
+  ],
+  "right_page": [
+   665,
+   70,
+   1030,
+   560
+  ]
+ },
+ "note": "Rects are [x0,y0,x1,y1] for the blank ruled pages."
+}

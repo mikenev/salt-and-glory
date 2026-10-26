@@ -56,3 +56,101 @@ All textures below import as Sprites (no mipmaps, no NPOT resize). Every `.meta`
 | Chain shot | `SG_Shot_Chain.png` | 256×128 top-down: two iron balls joined by chunky chain links, with a warm halo so it reads on dark sea. Spin it around its centre in flight. |
 
 All of M2 shares one parchment texture: map, panel, buttons, medallions and marker discs.
+
+## M3: ships, duel, treasure and ranks
+
+Same painterly storybook style as the approved sloop: hand-painted texture, baked soft shadows, dark painted edge lines. No text or logos. All 2D textures import as Sprites with no mipmaps and no NPOT resize. Every `.meta` file is committed and was checked in a throwaway Unity 6000.3.26f1 project.
+
+### Ships (`Ships/`)
+Each ship is built the same way as the Sloop: real-world scale, origin at mid-hull, waterline at y = 0, bow faces +Z, 1 material and 1 1024² texture.
+
+| Ship | Folder | Tris | Size | Notes |
+|---|---|---|---|---|
+| Sloop | `Sloop/` | 2,432 | ~12 m | Unchanged mesh and albedo. M3 adds a mask and the nation variants. There is no ensign, only the pennant. |
+| Brigantine | `Brigantine/` | 2,998 | ~22 m | Square-rigged foremast, gaff main with a topsail, jib. |
+| Fluyt | `Fluyt/` | 2,998 | ~26 m | Wide-bellied trader with strong tumblehome and a narrow deck. Two square-rigged masts and a lateen mizzen. |
+| Frigate | `Frigate/` | 3,822 | ~34 m | Three square-rigged masts, a painted gun stripe, 9 guns a side, forecastle. |
+| Galleon | `Galleon/` | 3,788 | ~40 m | Tall two-tier stern castle with windows, forecastle, lateen mizzen, 10 guns a side. |
+
+Files in each folder:
+- `<Ship>.fbx`
+- `<Ship>_Albedo.png` (neutral base)
+- `<Ship>_Albedo_{England,Spain,France,Dutch,Pirate}.png`
+- `<Ship>_Mask.png`
+
+**Nation variants.** There are two ways to show a nation:
+- **Baked variants (works today).** The game's ships use the unlit shader, which shows `_MainTex` times `_Tint`. Swap the albedo for the nation's variant. Nation trim is repainted in the nation colour with the painted light and shade kept. Pirate sails are dark and tarred. The stern ensign shows the nation flag, or a generic black skull-and-crossbones for pirates.
+- **Shared tint mask (needs a shader).** One mask layout is shared by every ship, the Sloop included. Colours are in `Ships/SG_Nation_Palette.json`.
+
+| Mask channel | Covers |
+|---|---|
+| R | Sails |
+| G | Nation trim (sheer strake, gun stripe, pennants) |
+| B | Stern ensign rect |
+
+A shader would recolour G to the nation `trim` colour while keeping luminance, multiply R by `sail_mul`, and draw the flag into the B rect. That shader is game code and is not included. Masks import with sRGB off.
+
+### Duel stage (`Duel/Stage/`)
+The stage is three 1280×720 parallax layers. Every layer has a bottom-centre pivot.
+
+| Layer | File | Parallax | Notes |
+|---|---|---|---|
+| 0 | `SG_Duel_Sky.png` | 0.1 | Opaque. Sky, island and horizon. |
+| 1 | `SG_Duel_Sea.png` | 0.35 | Sea from the horizon (row 386) down. Transparent above. |
+| 2 | `SG_Duel_Deck.png` | 1.0 | Side-on deck with a rail at each end. Transparent around it. |
+
+`SG_Duel_Stage.json` holds:
+- the deck stand line (y 380 in the layer, back floor 335, front floor 418)
+- the inner rail x positions (270 and 1044)
+- a suggested deck offset of about 180 px down
+
+### Captains (`Duel/Captains/`)
+There are two captains:
+- **Player:** cavalier hat with a plume, rapier.
+- **Enemy:** stockier, bearded, wears a bandana under a tall hat, longer coat, cutlass.
+
+Both are rendered from a single rig, so the character stays identical across frames.
+
+Sheet details:
+- Each sheet is 3584×2880: 7 columns × 9 rows of **512×320 cells**.
+- One row per animation, top row first, with frames left to right. Unused cells are empty.
+- **The pivot is bottom-centre (0.5, 0) in every frame.** The feet stand on the bottom edge at x = 256.
+- 100 pixels per unit, so 1 unit = 1 m.
+- The captains face +X. Flip X for the opponent.
+- The `.meta` files slice every sheet into 49 sprites named `<sheet>_<anim>_<i>`, for example `SG_Captain_Player_England_high_2`.
+
+Sheets per captain:
+- `SG_Captain_<Who>_Base.png` (neutral)
+- `_England`, `_Spain`, `_France`, `_Dutch` and `_Pirate` (palette swaps)
+- `_Mask.png` (R = coat, G = sash, hat band, plume, cuffs and bandana)
+
+| Animation | Row | Frames | Suggested fps |
+|---|---|---|---|
+| idle | 0 | 6 | 8 |
+| step | 1 | 6 | 12 |
+| high (attack) | 2 | 6 | 14 |
+| mid (attack) | 3 | 6 | 14 |
+| low (attack) | 4 | 6 | 14 |
+| block | 5 | 3 | 12 |
+| parry | 6 | 5 | 14 |
+| hit | 7 | 4 | 12 |
+| fall | 8 | 7 | 10 |
+| **Total** | | **49** | |
+
+The same data is in `SG_Captain_Frames.json`.
+
+### Treasure (`Treasure/`)
+| Piece | File | Pivot | Notes |
+|---|---|---|---|
+| Combined map | `SG_Treasure_Map_Full.png` | Centre | 1024×768 torn parchment island chart with a red X. |
+| Map pieces | `SG_Treasure_MapPiece_{1..4}.png` | Centre | Cut from the full map along jagged tears. The X lies wholly inside piece 2 (top-right). `SG_Treasure_Map.json` gives each piece's offset so the four reassemble into the full map. |
+| Dig spot | `SG_Treasure_DigSpot.png` | Centre | 128² red X in a dotted ring, for the world map. |
+| Chest of gold | `SG_Treasure_Chest.png` | Bottom-centre | 512². The open chest sits on the bottom edge. |
+
+### UI (`UI/`)
+| Piece | File | Pivot | Notes |
+|---|---|---|---|
+| Rank icons | `SG_Icon_Rank_{1_Ensign,2_Lieutenant,3_Captain,4_Commodore,5_Admiral}.png` | Centre | 256² gold insignia on the M2 parchment medallion frame. Ensign: 1 chevron. Lieutenant: 2 chevrons. Captain: anchor. Commodore: anchor and 2 stars. Admiral: crossed anchors and a star. |
+| Captain's log | `SG_UI_CaptainsLog.png` | Centre | 1280×720 **full-screen background, not 9-slice**: an open blank logbook on a desk. `SG_UI_CaptainsLog.json` gives the text rects for both pages. |
+
+Generator scripts and Blender sources are kept outside the repo, in the art workspace.

@@ -1,0 +1,133 @@
+{
+ "note": "Shared nation palette for ship and captain tint masks. Ship mask: R = sails, G = nation trim (sheer strake, gun stripe, pennants), B = stern ensign rect. trim is the target colour (keeps painted light/shade); sail_mul multiplies the sails.",
+ "nations": {
+  "England": {
+   "trim": [
+    168,
+    40,
+    36
+   ],
+   "sail_mul": [
+    1,
+    1,
+    1
+   ],
+   "flag": "England"
+  },
+  "Spain": {
+   "trim": [
+    204,
+    160,
+    58
+   ],
+   "sail_mul": [
+    1,
+    1,
+    1
+   ],
+   "flag": "Spain"
+  },
+  "France": {
+   "trim": [
+    44,
+    66,
+    148
+   ],
+   "sail_mul": [
+    1,
+    1,
+    1
+   ],
+   "flag": "France"
+  },
+  "Dutch": {
+   "trim": [
+    222,
+    120,
+    38
+   ],
+   "sail_mul": [
+    1,
+    1,
+    1
+   ],
+   "flag": "Dutch"
+  },
+  "Pirate": {
+   "trim": [
+    44,
+    38,
+    36
+   ],
+   "sail_mul": [
+    0.34,
+    0.31,
+    0.31
+   ],
+   "flag": "Pirate"
+  }
+ },
+ "captains": {
+  "note": "Captain sheet mask: R = coat, G = sash/hat band/plume/cuffs (bandana on the enemy). Colours keep the painted light/shade.",
+  "England": {
+   "coat": [
+    138,
+    38,
+    34
+   ],
+   "trim": [
+    236,
+    230,
+    214
+   ]
+  },
+  "Spain": {
+   "coat": [
+    44,
+    40,
+    46
+   ],
+   "trim": [
+    206,
+    164,
+    62
+   ]
+  },
+  "France": {
+   "coat": [
+    48,
+    66,
+    132
+   ],
+   "trim": [
+    226,
+    196,
+    96
+   ]
+  },
+  "Dutch": {
+   "coat": [
+    82,
+    84,
+    96
+   ],
+   "trim": [
+    226,
+    124,
+    40
+   ]
+  },
+  "Pirate": {
+   "coat": [
+    96,
+    64,
+    42
+   ],
+   "trim": [
+    156,
+    32,
+    30
+   ]
+  }
+ }
+}

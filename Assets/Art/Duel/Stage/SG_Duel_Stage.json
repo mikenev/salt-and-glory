@@ -1,0 +1,36 @@
+{
+ "size": [
+  1280,
+  720
+ ],
+ "pivot": "bottom-centre (0.5, 0) for all three layers",
+ "layers": [
+  {
+   "file": "SG_Duel_Sky.png",
+   "order": 0,
+   "parallax": 0.1,
+   "note": "opaque sky, island and horizon"
+  },
+  {
+   "file": "SG_Duel_Sea.png",
+   "order": 1,
+   "parallax": 0.35,
+   "note": "sea from the horizon (row 386) down, transparent above"
+  },
+  {
+   "file": "SG_Duel_Deck.png",
+   "order": 2,
+   "parallax": 1.0,
+   "note": "deck with a rail at each end, transparent around it"
+  }
+ ],
+ "deck_pixels_top_left_origin": {
+  "floor_back_y": 335,
+  "floor_front_y": 418,
+  "stand_line_y": 380,
+  "left_rail_inner_x": 270,
+  "right_rail_inner_x": 1044
+ },
+ "suggested_deck_offset_y": 180,
+ "note": "Shift the deck layer down about 180 px (in 720p) so the stand line sits near y=560 on screen; the hull bottom runs off-screen."
+}
