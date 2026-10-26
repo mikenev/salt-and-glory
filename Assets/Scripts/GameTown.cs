@@ -186,11 +186,12 @@ namespace SaltGlory {
       panelSt ??= new GUIStyle{ border = new RectOffset(64, 64, 64, 64) }; panelSt.normal.background = panelTex ? panelTex : white;
       btnSt ??= new GUIStyle{ border = new RectOffset(24, 24, 24, 24), alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = true };
       btnHiSt ??= new GUIStyle(btnSt);
-      btnSt.normal.background = buttonTex ? buttonTex : white; btnHiSt.normal.background = buttonHiTex ? buttonHiTex : white;
+      btnSt.normal.background = null; btnHiSt.normal.background = null;   // the face is drawn by Slice9 (or the fallback box)
       btnSt.normal.textColor = btnHiSt.normal.textColor = Ink; btnSt.fontSize = btnHiSt.fontSize = Mathf.RoundToInt(17 * s);
       inkSt ??= new GUIStyle(GUI.skin.label){ wordWrap = true }; inkBig ??= new GUIStyle(GUI.skin.label){ fontStyle = FontStyle.Bold, wordWrap = true }; inkSmall ??= new GUIStyle(GUI.skin.label){ wordWrap = true };
       inkSt.fontSize = Mathf.RoundToInt(17 * s); inkBig.fontSize = Mathf.RoundToInt(26 * s); inkSmall.fontSize = Mathf.RoundToInt(14 * s);
       inkSt.normal.textColor = inkBig.normal.textColor = inkSmall.normal.textColor = Ink;
+      SkinStyles();
     }
     void PanelBox(Rect r){ if (panelTex) GUI.Box(r, GUIContent.none, panelSt); else Box(r, new Color(0.93f, 0.86f, 0.68f, 0.95f)); }
     /// <summary>Menu button: drawn on Repaint, fires once for a click / tap that began inside it this frame, or for Enter / A
@@ -199,7 +200,11 @@ namespace SaltGlory {
       var e = Event.current; if (e.type != EventType.Repaint) return false;
       int idx = btnCount++; navRects.Add((r, enabled)); bool focused = idx == focus && enabled, hover = enabled && (r.Contains(e.mousePosition) || focused);
       var oc = GUI.color; if (!enabled) GUI.color = new Color(1f, 1f, 1f, 0.45f);
-      if (buttonTex) GUI.Box(r, label, hover ? btnHiSt : btnSt); else { Box(r, hover ? new Color(0.98f, 0.9f, 0.7f) : new Color(0.88f, 0.8f, 0.62f)); Label(r, label, btnSt, Ink); }
+      bool down = enabled && Mouse.current != null && Mouse.current.leftButton.isPressed && r.Contains(e.mousePosition);
+      if (buttonTex){   // M4 skin: 9-slice scaled to the button height (normal / hover / pressed), label from code
+        Slice9(r, hudBtnSt, r.height / BtnArtH, down && buttonDownTex ? buttonDownTex : hover && buttonHiTex ? buttonHiTex : null);
+        GUI.Label(down ? new Rect(r.x, r.y + 2f, r.width, r.height) : r, label, btnSt);
+      } else { Box(r, hover ? new Color(0.98f, 0.9f, 0.7f) : new Color(0.88f, 0.8f, 0.62f)); Label(r, label, btnSt, Ink); }
       GUI.color = oc;
       if (focused){ float t = Mathf.Max(3f, 4f * bgK); var gold = new Color(1f, 0.78f, 0.2f); Box(new Rect(r.x - t, r.y - t, r.width + 2 * t, t), gold); Box(new Rect(r.x - t, r.yMax, r.width + 2 * t, t), gold); Box(new Rect(r.x - t, r.y, t, r.height), gold); Box(new Rect(r.xMax, r.y, t, r.height), gold); }
       if (enabled && navActivate == idx){ navActivate = -1; return true; }
@@ -207,12 +212,13 @@ namespace SaltGlory {
       return false;
     }
     /// <summary>Call at the start of each menu Repaint: the button list is rebuilt as the buttons are drawn.</summary>
-    void BeginButtons(){ if (Event.current.type == EventType.Repaint){ navRects.Clear(); btnCount = 0; } }
+    int passFocus;   // the focus when this Repaint began: a press that opens another menu resets it to -1, and that menu picks its own
+    void BeginButtons(){ if (Event.current.type == EventType.Repaint){ navRects.Clear(); btnCount = 0; passFocus = focus; } }
     /// <summary>End of the menu Repaint. M4 QA: every menu opens with the focus already on a button (so the first arrow press moves
     /// it), and when the focused button turns disabled (a repair done, a refit bought) the focus moves to the nearest enabled one.</summary>
     void EndButtons(){
       if (Event.current.type != EventType.Repaint) return;
-      if (navRects.Count > 0 && (focus < 0 || focus >= navRects.Count || !navRects[focus].on)){
+      if (navRects.Count > 0 && !(focus < 0 && passFocus >= 0) && (focus < 0 || focus >= navRects.Count || !navRects[focus].on)){
         int best = -1; float bd = 1e9f; var c = focus >= 0 && focus < navRects.Count ? navRects[focus].r.center : new Vector2(-1e5f, -1e5f);
         for (int i = 0; i < navRects.Count; i++){ if (!navRects[i].on) continue; float d = c.x < -1e4f ? i : (navRects[i].r.center - c).sqrMagnitude; if (d < bd){ bd = d; best = i; } }
         if (best >= 0) focus = best;
@@ -244,6 +250,7 @@ namespace SaltGlory {
     void UseUiFit(float W, float H, float uk){ bgK = uk; bgO = new Vector2((W - 1280f * uk) / 2f, (H - 720f * uk) / 2f); }
 
     void TitleGUI(float W, float H, float uk){
+      if (titleLogoTex){ TitleSkinGUI(W, H, uk); return; }
       Background(titleTex, W, H); Box(new Rect(0, 0, W, H), new Color(0.05f, 0.04f, 0.03f, 0.35f));
       UseUiFit(W, H, uk);
       PanelBox(R(390, 90, 500, 560));
@@ -424,7 +431,8 @@ namespace SaltGlory {
       float my = Rr.y + 250, mh = Rr.yMax - my - 26, fw = 1024f, fh = 768f; if (tmap?.full_size?.Length == 2){ fw = tmap.full_size[0]; fh = tmap.full_size[1]; }
       float mk = Mathf.Min(mh / fh, Rr.width / fw); var mr = new Rect(Rr.x + (Rr.width - fw * mk) / 2f, my, fw * mk, fh * mk);
       Label(R(Rr.x, my - 26, Rr.width, 24), career.digActive ? $"Treasure map: X near {career.digNear}" : $"Treasure map: {career.mapPieces} of 4 pieces", inkSmall, Ink);
-      if (career.digActive && mapFullTex) GUI.DrawTexture(R(mr.x, mr.y, mr.width, mr.height), mapFullTex, ScaleMode.StretchToFill);
+      if (career.digActive && (fragTex || !mapFullTex)){ float fs = Mathf.Min(mh + 26, Rr.width); DrawFragment(R(Rr.x + (Rr.width - fs) / 2f, my - 6, fs, fs)); }   // M4: the real dig region
+      else if (career.digActive) GUI.DrawTexture(R(mr.x, mr.y, mr.width, mr.height), mapFullTex, ScaleMode.StretchToFill);
       else for (int i = 0; i < Mathf.Min(4, career.mapPieces); i++){
         var pc = tmap?.pieces != null && i < tmap.pieces.Length ? tmap.pieces[i] : null; var t = mapPieceTex[i]; if (!t) continue;
         float ox = pc?.offset_top_left_px?.Length == 2 ? pc.offset_top_left_px[0] : (i % 2) * fw / 2f, oy = pc?.offset_top_left_px?.Length == 2 ? pc.offset_top_left_px[1] : (i / 2) * fh / 2f;

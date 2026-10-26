@@ -79,13 +79,13 @@ namespace SaltGlory {
       if (board && CanBoard()) Board(src);
     }
     void BoardAskGUI(){
-      PanelBox(R(330, 210, 620, 290));
+      PanelBox(R(330, 196, 620, 340));
       Label(R(370, 244, 540, 40), $"Board the {enemy.label}?", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter }, Ink);
       Label(R(370, 292, 540, 80), BoardLawful ? $"She sails for an enemy of your {World.Adj[career.marque]} patron: a lawful prize under your letter of marque."
         : $"She has not fired on you. Boarding her is piracy: {World.NationNames[(int)encNation]} will not forget it.", new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
       if (Btn(R(370, 392, 260, 62), BoardLawful ? "Board her" : "Board her (piracy)")) CloseAsk(true, "confirm");
       if (Btn(R(650, 392, 260, 62), "Leave her be")) CloseAsk(false, "cancel");
-      Label(R(370, 460, 540, 24), "Enter / A / tap to choose  ·  Esc / B to leave her be", new GUIStyle(inkSmall){ alignment = TextAnchor.MiddleCenter }, Ink);
+      Label(R(370, 462, 540, 24), "Enter / A / tap to choose  ·  Esc / B to leave her be", new GUIStyle(inkSmall){ alignment = TextAnchor.MiddleCenter }, Ink);
     }
 
     // ---------- fame and rank ----------
@@ -111,14 +111,14 @@ namespace SaltGlory {
       GameAudio.I?.Play("grapple"); GameAudio.I?.SetDuel(true);
       state = State.Duel; stateT = 0f; duelT = 0f; duelOver = 0; duelResult = ""; ptrs.Clear(); dStick = dGest = -99;
       // crew sizes set the starting line: more hands push the fight toward the enemy's rail (grape shot pays off here)
-      float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * DeckL * 0.3f;
+      float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * DeckL * 0.25f;
       Init(dp, c - 0.9f, 1); Init(de, c + 0.9f, -1);
       // the AI captain: warships and treasure guards fight best; merchant captains get tougher with their ship (M4 balance:
       // a fluyt's master is no pushover), and bigger ships' captains give ground more slowly (eGrit scales pushes against them)
       bool war = encWarship || encTreasure; float cl = enemy.cls / 4f;
-      aggr = war ? 0.62f : encPirate ? 0.58f : 0.5f + 0.1f * cl; reactP = war ? 0.55f : encPirate ? 0.48f : 0.48f + 0.12f * cl;
-      parryP = war ? 0.16f : encPirate ? 0.1f : 0.12f + 0.06f * cl; smartP = war ? 0.6f : encPirate ? 0.4f : 0.5f + 0.15f * cl;
-      eGrit = 1f / (1f + 0.1f * enemy.cls);
+      aggr = war ? 0.62f : encPirate ? 0.58f : 0.5f + 0.1f * cl; reactP = war ? 0.55f : encPirate ? 0.48f : 0.5f + 0.2f * cl;
+      parryP = war ? 0.16f : encPirate ? 0.1f : 0.12f + 0.1f * cl; smartP = war ? 0.6f : encPirate ? 0.4f : 0.5f + 0.15f * cl;
+      eGrit = 1f / (1f + 0.2f * enemy.cls);
       aiT = 1.2f; aiReactAt = -1f;
       Debug.Log($"[SG] boarding {enemy.label} by {src} crew={pc:F0} vs {ec:F0} start={c:F2}");
     }
@@ -227,7 +227,7 @@ namespace SaltGlory {
         float pieceP = enemy.cls == ShipClass.Galleon ? 0.6f : encPirate ? 0.4f : 0.2f;
         if (Random.value < pieceP){ loot += ", a torn map piece"; GainPiece("captured"); }
         if (!encPirate && career.missionTarget == (int)encNation && !career.missionDone){ career.missionDone = true; loot += ". Mission done: report to the governor"; }
-        duelResult = $"The {enemy.label} is yours! {loot}.";
+        duelResult = $"The {enemy.label} is yours! {loot}."; Debug.Log("[SG] duel result: " + duelResult);
         GameAudio.I?.Play("cheer"); GameAudio.I?.Play("coins");
         Debug.Log($"[SG] duel won: captured {enemy.label} class={enemy.C.name} gold={career.gold} hold={career.Hold} fame={career.fame} pieces={career.mapPieces}");
       } else {

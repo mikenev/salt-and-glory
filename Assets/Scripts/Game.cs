@@ -91,12 +91,12 @@ namespace SaltGlory {
     float S => Screen.height / 720f;
     Rect RPort => new Rect(20 * S, Screen.height - 160 * S, 140 * S, 140 * S);
     Rect RStar => new Rect(Screen.width - 160 * S, Screen.height - 160 * S, 140 * S, 140 * S);
-    Rect RShot => new Rect(Screen.width / 2f - 90 * S, Screen.height - 76 * S, 180 * S, 60 * S);
-    Rect RSlider => new Rect(Screen.width - 112 * S, Screen.height - 480 * S, 72 * S, 290 * S);
+    Rect RShot => Skin ? new Rect(Screen.width / 2f - 144 * S, Screen.height - 112 * S, 288 * S, 88 * S) : new Rect(Screen.width / 2f - 90 * S, Screen.height - 76 * S, 180 * S, 60 * S);
+    Rect RSlider => new Rect(Screen.width - 112 * S, Screen.height - 440 * S, 72 * S, 260 * S);
     Rect RPause => new Rect(Screen.width / 2f - 90 * S, 12 * S, 80 * S, 50 * S);
     Rect RMap => new Rect(Screen.width / 2f + 10 * S, 12 * S, 80 * S, 50 * S);
     Rect RLog => new Rect(Screen.width / 2f + 100 * S, 12 * S, 80 * S, 50 * S);
-    Rect RDock => new Rect(Screen.width / 2f - 170 * S, Screen.height - 150 * S, 340 * S, 60 * S);
+    Rect RDock => new Rect(Screen.width / 2f - 260 * S, Screen.height - (Skin ? 206 : 150) * S, 520 * S, 60 * S);
 
     /// <summary>Touches and the mouse as one list of pointers (GUI coordinates: y down).</summary>
     IEnumerable<(int id, Vector2 p, bool began, bool down)> Pointers(){
@@ -529,29 +529,35 @@ namespace SaltGlory {
         var sp = cam.WorldToScreenPoint(enemy.Pos + Vector3.up * enemy.height * enemy.transform.localScale.x);
         if (sp.z > 0) Label(new Rect(sp.x - 150 * s, H - sp.y - 24 * s, 300 * s, 24 * s), enemy.label, new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }, encHostile ? new Color(1f, 0.6f, 0.5f) : Parchment);
       }
-      // wind compass (top-left): arrow points where the wind blows
-      var cr = new Rect(16 * s, 16 * s, 110 * s, 110 * s);
-      var o = GUI.color; GUI.color = new Color(0.12f, 0.09f, 0.06f, 0.55f); GUI.DrawTexture(cr, disc); GUI.color = Parchment; GUI.DrawTexture(cr, ring);
-      var m = GUI.matrix; GUIUtility.RotateAroundPivot(windFrom + 180f, cr.center); GUI.color = new Color(0.55f, 0.8f, 0.95f); GUI.DrawTexture(new Rect(cr.center.x - 22 * s, cr.center.y - 40 * s, 44 * s, 80 * s), arrow); GUI.matrix = m;
-      GUIUtility.RotateAroundPivot(player.heading, cr.center); GUI.color = new Color(0.95f, 0.75f, 0.35f); GUI.DrawTexture(new Rect(cr.center.x - 5 * s, cr.y - 2 * s, 10 * s, 18 * s), white); GUI.matrix = m;
-      GUI.color = o;
-      Label(new Rect(cr.x, cr.yMax + 2 * s, 260 * s, 24 * s), "WIND", small, Parchment);
+      if (Skin) SkinHud(s, W, H);
+      else {   // M3 placeholder HUD (no skin art)
+        // wind compass (top-left): arrow points where the wind blows
+        var cr = new Rect(16 * s, 16 * s, 110 * s, 110 * s);
+        var o = GUI.color; GUI.color = new Color(0.12f, 0.09f, 0.06f, 0.55f); GUI.DrawTexture(cr, disc); GUI.color = Parchment; GUI.DrawTexture(cr, ring);
+        var m = GUI.matrix; GUIUtility.RotateAroundPivot(windFrom + 180f, cr.center); GUI.color = new Color(0.55f, 0.8f, 0.95f); GUI.DrawTexture(new Rect(cr.center.x - 22 * s, cr.center.y - 40 * s, 44 * s, 80 * s), arrow); GUI.matrix = m;
+        GUIUtility.RotateAroundPivot(player.heading, cr.center); GUI.color = new Color(0.95f, 0.75f, 0.35f); GUI.DrawTexture(new Rect(cr.center.x - 5 * s, cr.y - 2 * s, 10 * s, 18 * s), white); GUI.matrix = m;
+        GUI.color = o;
+        Label(new Rect(cr.x, cr.yMax + 2 * s, 260 * s, 24 * s), "WIND", small, Parchment);
+        float eff = Ship.WindFactor(player.OffWind(windFrom));
+        Box(new Rect(136 * s, 16 * s, 250 * s, 130 * s), Panel);
+        Label(new Rect(146 * s, 20 * s, 240 * s, 26 * s), $"{Ship.PointOfSail(player.OffWind(windFrom))}  {eff * 100f:F0}%", txt, Parchment);
+        Label(new Rect(146 * s, 44 * s, 240 * s, 24 * s), $"Speed {player.speed * 1.2f:F1} kn   Sails {player.sail * 100f:F0}%", small, Parchment);
+        Bar(146 * s, 66 * s, 150 * s, "Hull", player.hull, new Color(0.85f, 0.55f, 0.3f));
+        Bar(146 * s, 84 * s, 150 * s, "Sails", player.sails, new Color(0.92f, 0.88f, 0.75f));
+        Bar(146 * s, 102 * s, 150 * s, "Crew", player.crew, new Color(0.6f, 0.8f, 0.55f));
+        Label(new Rect(146 * s, 120 * s, 240 * s, 24 * s), $"Gold {career.gold}   Hold {career.Hold}/{career.HoldMax}   Fame {career.fame}", small, Parchment);
+        if (encActive && !enemy.gone){
+          float d = Vector3.Distance(player.Pos, enemy.Pos);
+          Box(new Rect(W - 296 * s, 16 * s, 280 * s, 92 * s), Panel);
+          Label(new Rect(W - 286 * s, 20 * s, 270 * s, 26 * s), $"{enemy.label}  {d:F0} m", txt, encHostile ? new Color(1f, 0.75f, 0.65f) : Parchment);
+          Bar(W - 286 * s, 48 * s, 150 * s, "Hull", enemy.hull, new Color(0.85f, 0.4f, 0.3f));
+          Bar(W - 286 * s, 66 * s, 150 * s, "Sails", enemy.sails, new Color(0.92f, 0.88f, 0.75f));
+          Bar(W - 286 * s, 84 * s, 150 * s, "Crew", enemy.crew, new Color(0.6f, 0.8f, 0.55f));
+        }
+      }
       WindHint(s, W, H);
-      float eff = Ship.WindFactor(player.OffWind(windFrom));
-      Box(new Rect(136 * s, 16 * s, 250 * s, 130 * s), Panel);
-      Label(new Rect(146 * s, 20 * s, 240 * s, 26 * s), $"{Ship.PointOfSail(player.OffWind(windFrom))}  {eff * 100f:F0}%", txt, Parchment);
-      Label(new Rect(146 * s, 44 * s, 240 * s, 24 * s), $"Speed {player.speed * 1.2f:F1} kn   Sails {player.sail * 100f:F0}%", small, Parchment);
-      Bar(146 * s, 66 * s, 150 * s, "Hull", player.hull, new Color(0.85f, 0.55f, 0.3f));
-      Bar(146 * s, 84 * s, 150 * s, "Sails", player.sails, new Color(0.92f, 0.88f, 0.75f));
-      Bar(146 * s, 102 * s, 150 * s, "Crew", player.crew, new Color(0.6f, 0.8f, 0.55f));
-      Label(new Rect(146 * s, 120 * s, 240 * s, 24 * s), $"Gold {career.gold}   Hold {career.Hold}/{career.HoldMax}   Fame {career.fame}", small, Parchment);
       if (encActive && !enemy.gone){
         float d = Vector3.Distance(player.Pos, enemy.Pos);
-        Box(new Rect(W - 296 * s, 16 * s, 280 * s, 92 * s), Panel);
-        Label(new Rect(W - 286 * s, 20 * s, 270 * s, 26 * s), $"{enemy.label}  {d:F0} m", txt, encHostile ? new Color(1f, 0.75f, 0.65f) : Parchment);
-        Bar(W - 286 * s, 48 * s, 150 * s, "Hull", enemy.hull, new Color(0.85f, 0.4f, 0.3f));
-        Bar(W - 286 * s, 66 * s, 150 * s, "Sails", enemy.sails, new Color(0.92f, 0.88f, 0.75f));
-        Bar(W - 286 * s, 84 * s, 150 * s, "Crew", enemy.crew, new Color(0.6f, 0.8f, 0.55f));
         if (d > 80f) EdgeArrow(enemy.Pos, new Color(1f, 0.55f, 0.45f, 0.9f), s, W, H);
       }
       // nearest port: pointer when far, dock prompt (Enter / A / tap) when close
@@ -564,20 +570,23 @@ namespace SaltGlory {
       }
       string prompt = Prompt();
       if (prompt != null){
-        var rd = RDock; Box(rd, new Color(0.25f, 0.17f, 0.08f, 0.85f));
-        Label(rd, prompt + "  (Enter / A / tap)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        var rd = RDock;
+        if (Skin){ SkinStyles(); HudButton(rd, prompt + "  (Enter / A / tap)"); }
+        else { Box(rd, new Color(0.25f, 0.17f, 0.08f, 0.85f)); Label(rd, prompt + "  (Enter / A / tap)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment); }
       }
       // the nearest port sits under the pause and map buttons, clear of the ship (M2 QA)
       if (!NearPort(out _)) Label(new Rect(W / 2f - 250 * s, 66 * s, 500 * s, 24 * s), $"Nearest port: {near.name} ({World.Adj[(int)near.nation]}) {nd:F0} m   ·   M map   ·   L log" + (career.digActive ? "   ·   dig site marked" : ""), new GUIStyle(small){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      // touch controls (also clickable)
-      DrawFire(RPort, "PORT\n(Q)", player.portReady); DrawFire(RStar, "STARBOARD\n(E)", player.starReady);
-      var rs = RShot; Box(rs, Panel); Label(rs, $"Shot: {shot}  (Tab)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      var sl = RSlider; Box(sl, Panel); Box(new Rect(sl.center.x - 3 * s, sl.y + 10 * s, 6 * s, sl.height - 20 * s), new Color(1, 1, 1, 0.3f));
-      float ky = sl.y + 10 * s + (1f - player.sail) * (sl.height - 20 * s); Box(new Rect(sl.x + 6 * s, ky - 9 * s, sl.width - 12 * s, 18 * s), Parchment);
-      Label(new Rect(sl.x - 10 * s, sl.y - 24 * s, sl.width + 20 * s, 22 * s), "SAILS", new GUIStyle(small){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      var rp = RPause; Box(rp, Panel); Label(rp, "II", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      var rm = RMap; Box(rm, Panel); Label(rm, "MAP", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      var rl = RLog; Box(rl, Panel); Label(rl, "LOG", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+      if (!Skin){
+        // touch controls (also clickable)
+        DrawFire(RPort, "PORT\n(Q)", player.portReady); DrawFire(RStar, "STARBOARD\n(E)", player.starReady);
+        var rs = RShot; Box(rs, Panel); Label(rs, $"Shot: {shot}  (Tab)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        var sl = RSlider; Box(sl, Panel); Box(new Rect(sl.center.x - 3 * s, sl.y + 10 * s, 6 * s, sl.height - 20 * s), new Color(1, 1, 1, 0.3f));
+        float ky = sl.y + 10 * s + (1f - player.sail) * (sl.height - 20 * s); Box(new Rect(sl.x + 6 * s, ky - 9 * s, sl.width - 12 * s, 18 * s), Parchment);
+        Label(new Rect(sl.x - 10 * s, sl.y - 24 * s, sl.width + 20 * s, 22 * s), "SAILS", new GUIStyle(small){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        var rp = RPause; Box(rp, Panel); Label(rp, "II", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        var rm = RMap; Box(rm, Panel); Label(rm, "MAP", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        var rl = RLog; Box(rl, Panel); Label(rl, "LOG", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+      }
 
       TreasureGUI(s, W, H);
       if (Time.unscaledTime < bannerUntil && !mapOpen){
@@ -602,7 +611,7 @@ namespace SaltGlory {
     /// hint under the status panel when the bow is too close to the wind, saying to bear away and tack (zig-zag) upwind.</summary>
     void WindHint(float s, float W, float H){
       var sp = cam.WorldToScreenPoint(player.Pos); var o = GUI.color; var m = GUI.matrix;
-      if (sp.z > 0f){
+      if (sp.z > 0f && !Skin){   // with the skin, the gauge needle (top right) is the wind arrow
         float a = windFrom * Mathf.Deg2Rad; var up = new Vector2(Mathf.Sin(a), -Mathf.Cos(a));   // screen direction the wind comes from (y down)
         var c = new Vector2(sp.x, H - sp.y) + up * (70f + player.halfL * 2f) * s;
         GUI.color = new Color(0.55f, 0.85f, 1f, 0.7f); GUIUtility.RotateAroundPivot(windFrom + 180f, c);
@@ -611,9 +620,9 @@ namespace SaltGlory {
       float off = Mathf.Abs(player.OffWind(windFrom)); if (off >= 45f || player.sail < 0.1f) return;
       var near = NearestPort(player.Pos); var d = near.pos - player.Pos;
       bool portUp = Mathf.Abs(Mathf.DeltaAngle(Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, windFrom)) < 45f && d.magnitude > 120f;
-      var r = new Rect(16 * s, 198 * s, 370 * s, 62 * s); Box(r, new Color(0.25f, 0.17f, 0.08f, 0.85f));
+      var r = new Rect(W / 2f - 270 * s, 94 * s, 540 * s, 52 * s); Box(r, new Color(0.25f, 0.17f, 0.08f, 0.85f));
       Label(new Rect(r.x + 10 * s, r.y + 4 * s, r.width - 20 * s, r.height - 8 * s), (off < 30f ? "In irons: the wind is dead ahead. " : "Too close to the wind. ") +
-        (portUp ? $"{near.name} is upwind: zig-zag (tack) across the wind to reach it." : "Bear away until the blue wind arrow is more across your course."), new GUIStyle(small){ wordWrap = true }, Parchment);
+        (portUp ? $"{near.name} is upwind: zig-zag (tack) across the wind to reach it." : (Skin ? "Bear away until the gauge needle points out to the side." : "Bear away until the blue wind arrow is more across your course.")), new GUIStyle(small){ wordWrap = true }, Parchment);
     }
     void DrawFire(Rect r, string label, float ready){
       float left = ready - Time.time; Box(r, Panel);

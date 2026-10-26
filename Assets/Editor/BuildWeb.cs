@@ -151,11 +151,23 @@ public static class BuildWeb {
     g.cam = cam; g.sea = sea.transform; g.seaMat = seaMat; g.chainMesh = chainMesh; g.chainMat = chainMat; g.landMask = landMask;
     // M2 art by file name (Art Dev's M2 set); anything missing stays null and the game falls back
     g.portsJson = Load<TextAsset>("Assets/Art/Map/SG_Map_Ports.json");
-    g.titleTex = Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_OpenSea.png");
+    g.titleTex = Load<Texture2D>("Assets/Art/Title/SG_Title_Backdrop.png") ?? Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_OpenSea.png");
     g.mapTex = Art("Assets/Art/Map", "SG_Map_Caribbean"); g.portMarkerTex = Art("Assets/Art/Map", "PortMarker"); g.portRingTex = Art("Assets/Art/Map", "PortMarker_Ring");
     if (g.portMarkerTex == g.portRingTex) g.portMarkerTex = Load<Texture2D>("Assets/Art/Map/SG_Map_PortMarker.png");
     g.shipMarkerTex = Art("Assets/Art/Map", "ShipMarker");
-    g.panelTex = Art("Assets/Art/UI", "Panel_Parchment"); g.buttonTex = Art("Assets/Art/UI", "Button_Normal"); g.buttonHiTex = Art("Assets/Art/UI", "Button_Highlighted"); g.coinTex = Art("Assets/Art/UI", "Icon_Coin");
+    g.coinTex = Art("Assets/Art/UI", "Icon_Coin");
+    // M4 skin (PR #11): Assets/Art/UI/HUD/SG_HUD_* (not the M2 SG_UI_* sprites), title backdrop + logo, treasure fragment + X
+    Texture2D Hud(string n) => Load<Texture2D>($"Assets/Art/UI/HUD/SG_HUD_{n}.png");
+    g.panelTex = Hud("Panel") ?? Art("Assets/Art/UI", "Panel_Parchment"); g.buttonTex = Hud("Button_Normal") ?? Art("Assets/Art/UI", "Button_Normal");
+    g.buttonHiTex = Hud("Button_Hover") ?? Art("Assets/Art/UI", "Button_Highlighted"); g.buttonDownTex = Hud("Button_Pressed");
+    g.barFrameTex = Hud("Bar_Frame"); g.hullFillTex = Hud("Bar_Fill_Hull"); g.crewFillTex = Hud("Bar_Fill_Crew"); g.readoutTex = Hud("Readout");
+    g.gaugeFrameTex = Hud("Gauge_Frame"); g.gaugeNeedleTex = Hud("Gauge_Needle"); g.shotBackTex = Hud("ShotSlot_Back"); g.shotFrameTex = Hud("ShotSlot_Frame");
+    const string sailFill = "Assets/Art/UI/HUD/SG_HUD_Gauge_SailFill.png";   // read on the CPU for the radial fill
+    if (AssetImporter.GetAtPath(sailFill) is TextureImporter sfi && !sfi.isReadable){ sfi.isReadable = true; sfi.SaveAndReimport(); }
+    g.gaugeSailTex = Load<Texture2D>(sailFill); g.shotChainTex = Load<Texture2D>("Assets/Art/Projectiles/SG_Shot_Chain.png");
+    g.titleLogoTex = Load<Texture2D>("Assets/Art/Title/SG_Title_Logo.png");
+    g.fragTex = Load<Texture2D>("Assets/Art/Treasure/SG_Treasure_Fragment_Template.png"); g.treasureXTex = Load<Texture2D>("Assets/Art/Treasure/SG_Treasure_X.png");
+    foreach (var t in new[]{ g.panelTex, g.barFrameTex, g.gaugeFrameTex, g.titleLogoTex, g.fragTex }) if (!t) Debug.LogWarning("[Setup] an M4 skin texture is missing (fallback)");
     g.tavernTex = Art("Assets/Art/Towns", "Town_Tavern"); g.governorTex = Art("Assets/Art/Towns", "Town_Governor"); g.merchantTex = Art("Assets/Art/Towns", "Town_Merchant"); g.shipwrightTex = Art("Assets/Art/Towns", "Town_Shipwright");
     string[] nat = { "England", "Spain", "France", "Dutch" };
     var anchors = Load<TextAsset>("Assets/Art/Towns/SG_Town_FlagAnchors.json"); var aj = anchors ? anchors.text : "";
