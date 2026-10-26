@@ -9,6 +9,16 @@ Format: OGG Vorbis, 44.1 kHz. Peaks are measured on the decoded files, and nothi
 | `SFX/ocean_waves_loop.ogg` | 12.00 s | -11.9 | yes, seamless | Mono ambient bed, deliberately quieter than the other SFX |
 | `SFX/cannon_shot.ogg` | 1.60 s | -6.0 | no | Mono one-shot |
 | `SFX/sword_clash.ogg` | 0.90 s | -6.3 | no | Mono one-shot, two-hit clash with a blade scrape |
+| `Music/town_loop.ogg` | 32.73 s (24 bars) | -3.0 | yes, seamless | Stereo. **132 BPM** in 3/4, D major with a Mixolydian C natural. Plucked guitar (bass and strums), tin whistle, and a soft low drum. The tune was written for this game |
+| `SFX/tavern_chatter_loop.ogg` | 10.00 s | -14.0 | yes, seamless | Mono bed, deliberately quieter. Wordless synthetic babble from 9 talkers plus mug clinks, muffled |
+| `SFX/cannonball_splash.ogg` | 1.50 s | -5.7 | no | Incoming whistle, splash, droplets |
+| `SFX/hull_hit.ogg` | 0.76 s | -6.2 | no | Wooden crunch and splinters, high-passed so it has no boom (unlike `cannon_shot`) |
+| `SFX/coins.ogg` | 0.78 s | -5.9 | no | Coin jingle |
+| `SFX/ships_bell.ogg` | 3.20 s | -5.9 | no | Two strikes |
+| `SFX/door.ogg` | 1.30 s | -5.9 | no | Hinge creak, thud, latch |
+| `SFX/map_unroll.ogg` | 1.00 s | -6.1 | no | Paper rustle, then it lands flat |
+| `SFX/sails_filling.ogg` | 1.55 s | -6.0 | no | Air swell, the canvas snaps taut, rope creak |
 
 Looping is set on the AudioSource (`loop = true`), not in the importer.
-`Previews/sailing_loop.mp3` (repo root, outside Assets) is a review copy only. MP3 adds encoder padding, so it isn't gapless; use the OGG in game.
+`Previews/sailing_loop.mp3` and `Previews/town_loop.mp3` (repo root, outside Assets) are review copies only. MP3 adds encoder padding, so they aren't gapless; use the OGG in game.
+M2 `.meta` files: music is Streaming, SFX are DecompressOnLoad, and `normalize` is off so the authored levels hold. The sample-pack metas are unchanged.
