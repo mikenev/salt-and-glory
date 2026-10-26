@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -75,7 +76,25 @@ public static class BuildWeb {
       b[y * MW + x] = (byte)(warm >= 2 && !rose ? 255 : 0);
     }
     Object.DestroyImmediate(t);
+    // close channels narrower than a ship (~3 px = 7 m radius): fills the inlet north of Port Royal where ships got pinned (M2 QA)
+    b = Close(b, MW, MH, 3);
     File.WriteAllBytes(dst, b); AssetDatabase.ImportAsset(dst); return AssetDatabase.LoadAssetAtPath<TextAsset>(dst);
+  }
+  static byte[] Close(byte[] m, int w, int h, int r){
+    byte[] Morph(byte[] src, bool dilate){
+      var o = new byte[src.Length];
+      for (int y = 0; y < h; y++) for (int x = 0; x < w; x++){
+        bool hit = !dilate;
+        for (int j = -r; j <= r && hit != dilate; j++) for (int i = -r; i <= r; i++){
+          if (i * i + j * j > r * r) continue; int xx = x + i, yy = y + j;
+          bool land = xx < 0 || yy < 0 || xx >= w || yy >= h || src[yy * w + xx] > 0;
+          if (dilate && land){ hit = true; break; } if (!dilate && !land){ hit = false; break; }
+        }
+        o[y * w + x] = (byte)(hit ? 255 : 0);
+      }
+      return o;
+    }
+    return Morph(Morph(m, true), false);
   }
   /// <summary>First texture in a folder whose file name contains the key (so Art Dev's files drop in by name), or null.</summary>
   static Texture2D Art(string folder, string key){
@@ -84,6 +103,12 @@ public static class BuildWeb {
       var p = AssetDatabase.GUIDToAssetPath(g); if (Path.GetFileNameWithoutExtension(p).Contains(key)) return AssetDatabase.LoadAssetAtPath<Texture2D>(p);
     }
     Debug.LogWarning($"[Setup] no art for {key} in {folder} (fallback)"); return null;
+  }
+  static Texture2D ArtAny(string key){
+    foreach (var gd in AssetDatabase.FindAssets("t:Texture2D", new[]{ "Assets/Art" })){
+      var p = AssetDatabase.GUIDToAssetPath(gd); if (Path.GetFileNameWithoutExtension(p).Contains(key)) return AssetDatabase.LoadAssetAtPath<Texture2D>(p);
+    }
+    Debug.LogWarning($"[Setup] no art for {key} (fallback)"); return null;
   }
   static Vector3 Anchor(string json, string file){
     var m = System.Text.RegularExpressions.Regex.Match(json ?? "", "\"" + System.Text.RegularExpressions.Regex.Escape(file) + "\"\\s*:\\s*\\{\\s*\"hoist\"\\s*:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\]\\s*,\\s*\"scale\"\\s*:\\s*([\\d.]+)");
@@ -100,7 +125,6 @@ public static class BuildWeb {
     var albedo = Load<Texture2D>("Assets/Art/Ships/Sloop/Sloop_Albedo.png");
     var frame = Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_ShipBattle.png");
     var playerMat = Mat("SloopMat", "SaltGlory/Unlit", albedo, Color.white);
-    var enemyMat = Mat("EnemySloopMat", "SaltGlory/Unlit", albedo, new Color(0.8f, 0.66f, 0.64f));   // placeholder: the same sloop, darker red-brown
     var ballMat = Mat("BallMat", "SaltGlory/Unlit", Texture2D.whiteTexture, new Color(0.11f, 0.1f, 0.09f));
     var softMat = Mat("SoftParticle", "SaltGlory/SoftParticle", null, Color.white);
     var seaMat = Mat("SeaMat", "SaltGlory/Sea", frame, new Color(1.3f, 1.36f, 1.32f));
@@ -123,7 +147,7 @@ public static class BuildWeb {
     sr.shadowCastingMode = ShadowCastingMode.Off; sr.receiveShadows = false;
 
     var g = new GameObject("Game").AddComponent<Game>();
-    g.sloopModel = sloop; g.playerMat = playerMat; g.enemyMat = enemyMat; g.ballMat = ballMat; g.softMat = softMat; g.ballMesh = ballMesh;
+    g.sloopModel = sloop; g.playerMat = playerMat; g.ballMat = ballMat; g.softMat = softMat; g.ballMesh = ballMesh;
     g.cam = cam; g.sea = sea.transform; g.seaMat = seaMat; g.chainMesh = chainMesh; g.chainMat = chainMat; g.landMask = landMask;
     // M2 art by file name (Art Dev's M2 set); anything missing stays null and the game falls back
     g.portsJson = Load<TextAsset>("Assets/Art/Map/SG_Map_Ports.json");
@@ -142,6 +166,28 @@ public static class BuildWeb {
       g.flagAnchors[i] = Anchor(aj, $"SG_Harbor_{nat[i]}.png");
     }
     g.flagAnchors[4] = Anchor(aj, "SG_Town_Governor.png");
+    // M3 ship classes: Assets/Art/Ships/<Class>/<Class>.fbx (+ <Class>_Albedo.png) when Art Dev delivers them; else the sloop stands in
+    g.classModels = new GameObject[ShipClass.All.Length]; g.classMats = new Material[ShipClass.All.Length];
+    g.classModels[0] = sloop; g.classMats[0] = playerMat;
+    for (int i = 1; i < ShipClass.All.Length; i++){
+      string n = ShipClass.All[i].name, dir = $"Assets/Art/Ships/{n}";
+      var fbx = AssetDatabase.LoadAssetAtPath<GameObject>($"{dir}/{n}.fbx"); if (!fbx){ Debug.LogWarning($"[Setup] no model for {n} (sloop placeholder)"); continue; }
+      g.classModels[i] = fbx; var alb = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/{n}_Albedo.png"); g.classMats[i] = Mat(n + "Mat", "SaltGlory/Unlit", alb ? alb : albedo, Color.white);
+    }
+    // M3 duel and treasure art, anywhere under Assets/Art by name (fallback: drawn shapes)
+    g.duelSkyTex = ArtAny("SG_Duel_Sky"); g.duelSeaTex = ArtAny("SG_Duel_Sea"); g.duelDeckTex = ArtAny("SG_Duel_Deck");
+    string[] v6 = { "Base", "England", "Spain", "France", "Dutch", "Pirate" };
+    g.captainPlayer = v6.Select(v => ArtAny($"SG_Captain_Player_{v}")).ToArray(); g.captainEnemy = v6.Select(v => ArtAny($"SG_Captain_Enemy_{v}")).ToArray();
+    g.chestTex = ArtAny("SG_Treasure_Chest"); g.digMarkTex = ArtAny("SG_Treasure_DigSpot"); g.mapFullTex = ArtAny("SG_Treasure_Map_Full");
+    g.mapPieceTex = Enumerable.Range(1, 4).Select(i => ArtAny($"SG_Treasure_MapPiece_{i}")).ToArray();
+    g.rankTex = Career.Ranks.Select((r, i) => ArtAny($"SG_Icon_Rank_{i + 1}_{r}")).ToArray(); g.logTex = ArtAny("SG_UI_CaptainsLog");
+    g.stageJson = Load<TextAsset>("Assets/Art/Duel/Stage/SG_Duel_Stage.json"); g.framesJson = Load<TextAsset>("Assets/Art/Duel/Captains/SG_Captain_Frames.json");
+    g.treasureJson = Load<TextAsset>("Assets/Art/Treasure/SG_Treasure_Map.json"); g.logJson = Load<TextAsset>("Assets/Art/UI/SG_UI_CaptainsLog.json");
+    // nation / pirate albedos per class ([class * 6 + v]); the sloop's too
+    g.shipAlbedo = new Texture2D[ShipClass.All.Length * 6];
+    for (int c = 0; c < ShipClass.All.Length; c++) for (int v = 0; v < 6; v++){
+      string n = ShipClass.All[c].name; g.shipAlbedo[c * 6 + v] = Load<Texture2D>($"Assets/Art/Ships/{n}/{n}_Albedo{(v == 0 ? "" : "_" + v6[v])}.png");
+    }
     g.cargoTex = new Texture2D[5]; for (int i = 0; i < 5; i++) g.cargoTex[i] = Art("Assets/Art/UI", "Icon_Cargo_" + World.Goods[i]);
 
     var ga = new GameObject("GameAudio").AddComponent<GameAudio>();
@@ -151,6 +197,13 @@ public static class BuildWeb {
     ga.hullHit = Load<AudioClip>("Assets/Audio/SFX/hull_hit.ogg"); ga.splash = Load<AudioClip>("Assets/Audio/SFX/cannonball_splash.ogg");
     ga.coins = Load<AudioClip>("Assets/Audio/SFX/coins.ogg"); ga.door = Load<AudioClip>("Assets/Audio/SFX/door.ogg"); ga.bell = Load<AudioClip>("Assets/Audio/SFX/ships_bell.ogg");
     ga.mapUnroll = Load<AudioClip>("Assets/Audio/SFX/map_unroll.ogg"); ga.sailsFilling = Load<AudioClip>("Assets/Audio/SFX/sails_filling.ogg");
+    // M3 audio (PR #7)
+    ga.battleMusic = Load<AudioClip>("Assets/Audio/Music/battle_loop.ogg"); ga.duelMusic = Load<AudioClip>("Assets/Audio/Music/duel_loop.ogg");
+    ga.clash = new[]{ "02", "03", "04" }.Select(n => Load<AudioClip>($"Assets/Audio/SFX/sword_clash_{n}.ogg")).Where(c => c).ToArray();
+    AudioClip Sfx(string n) => Load<AudioClip>($"Assets/Audio/SFX/{n}.ogg");
+    ga.parry = Sfx("parry_ring"); ga.whoosh = Sfx("sword_whoosh"); ga.bodyHit = Sfx("body_hit"); ga.overboard = Sfx("splash_overboard");
+    ga.mastCrack = Sfx("mast_crack"); ga.creak = Sfx("timber_creak_loop"); ga.cheer = Sfx("crew_cheer"); ga.grapple = Sfx("grappling_hooks");
+    ga.dig = Sfx("digging_shovel"); ga.chest = Sfx("chest_open");
 
     EditorSceneManager.SaveScene(scene, ScenePath);
     EditorBuildSettings.scenes = new[]{ new EditorBuildSettingsScene(ScenePath, true) };
