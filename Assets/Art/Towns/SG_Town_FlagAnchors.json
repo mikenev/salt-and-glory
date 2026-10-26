@@ -1,0 +1,38 @@
+{
+ "note": "Pixel positions in the 1280x720 town screens (origin top-left). Place the matching Towns/Flags sprite with its hoist (left) edge at 'hoist' and pivot top-left; 'scale' is the suggested size relative to the 128-px-wide flag sprite.",
+ "SG_Harbor_England.png": {
+  "hoist": [
+   751,
+   52
+  ],
+  "scale": 0.55
+ },
+ "SG_Harbor_Spain.png": {
+  "hoist": [
+   603,
+   31
+  ],
+  "scale": 0.55
+ },
+ "SG_Harbor_France.png": {
+  "hoist": [
+   994,
+   26
+  ],
+  "scale": 0.45
+ },
+ "SG_Harbor_Dutch.png": {
+  "hoist": [
+   413,
+   41
+  ],
+  "scale": 0.5
+ },
+ "SG_Town_Governor.png": {
+  "hoist": [
+   691,
+   104
+  ],
+  "scale": 0.6
+ }
+}
