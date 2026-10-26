@@ -39,7 +39,11 @@ namespace SaltGlory {
       Debug.Log($"[SG] docked {Here.name} ({World.Adj[(int)Here.nation]}) gold={career.gold} hull={player.hull:F0}");
     }
     void SetSail(){
-      var p = Here; var at = World.WaterNear(p.pos, 36f); var d = at - p.pos;
+      var p = Here; var at = World.WaterNear(p.pos, 36f);
+      for (float r = 36f; r < 120f; r += 6f){ bool ok = false;   // open water that is nearest to this port (St. Kitts and Sint Eustatius are close neighbours)
+        for (int i = 0; i < 24 && !ok; i++){ var q = p.pos + Quaternion.Euler(0f, i * 15f, 0f) * Vector3.forward * r; if (World.Land(q) < 0.08f && NearestPort(q) == p){ at = q; ok = true; } }
+        if (ok) break; }
+      var d = at - p.pos;
       player.transform.position = new Vector3(at.x, 0f, at.z); player.heading = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg; player.transform.rotation = Quaternion.Euler(0f, player.heading, 0f);
       player.sail = 0.6f; player.speed = 2f; camFocus = player.Pos;
       state = State.Sea; stateT = 0f; nextEncounter = Time.time + 20f; GameAudio.I?.SetScene(false, false); GameAudio.I?.Play("sails");
