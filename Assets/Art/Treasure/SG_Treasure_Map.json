@@ -1,0 +1,66 @@
+{
+ "full_map": "SG_Treasure_Map_Full.png",
+ "full_size": [
+  1024,
+  768
+ ],
+ "x_mark_px_top_left": [
+  740,
+  425
+ ],
+ "pieces": [
+  {
+   "file": "SG_Treasure_MapPiece_1.png",
+   "quadrant": "top-left",
+   "offset_top_left_px": [
+    0,
+    4
+   ],
+   "size": [
+    514,
+    497
+   ],
+   "contains_x": false
+  },
+  {
+   "file": "SG_Treasure_MapPiece_2.png",
+   "quadrant": "top-right",
+   "offset_top_left_px": [
+    493,
+    0
+   ],
+   "size": [
+    527,
+    503
+   ],
+   "contains_x": true
+  },
+  {
+   "file": "SG_Treasure_MapPiece_3.png",
+   "quadrant": "bottom-left",
+   "offset_top_left_px": [
+    0,
+    457
+   ],
+   "size": [
+    517,
+    311
+   ],
+   "contains_x": false
+  },
+  {
+   "file": "SG_Treasure_MapPiece_4.png",
+   "quadrant": "bottom-right",
+   "offset_top_left_px": [
+    496,
+    480
+   ],
+   "size": [
+    526,
+    288
+   ],
+   "contains_x": false
+  }
+ ],
+ "note": "Place each piece at its offset inside the 1024x768 full map to reassemble it; sprite pivots are centre."
+}

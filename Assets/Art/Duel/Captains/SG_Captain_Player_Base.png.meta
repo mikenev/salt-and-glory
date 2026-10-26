@@ -1,0 +1,1257 @@
+fileFormatVersion: 2
+guid: d04ac6524ad6724a594bdfb800f581de
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_idle_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03f5ed9bebb48c310800000000000000
+      internalID: 1425472564596989744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_idle_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e61719ce021310140800000000000000
+      internalID: 4684079104919695726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_idle_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79433c7c42f68e180800000000000000
+      internalID: -9085890044459010921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_idle_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fd33bab8a7397630800000000000000
+      internalID: 3925229748056440306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_idle_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dea4a75ca17ed14f0800000000000000
+      internalID: -856274251962234131
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_idle_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13971cf2f5cd68ff0800000000000000
+      internalID: -34097645777487567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_step_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00f1f6aaa1b6fced0800000000000000
+      internalID: -2391575114837713152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_step_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f54e88ba588e7dbe0800000000000000
+      internalID: -1452436693997525921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_step_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b986d2b8590070980800000000000000
+      internalID: -8572882723391313765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_step_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d644406d11d2b440800000000000000
+      internalID: 4950248864532940505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_step_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbd17e17d11925410800000000000000
+      internalID: 1464392384499883455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_step_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f6695e6e29f261f0800000000000000
+      internalID: -1053005385036110094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_high_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00151053af742b860800000000000000
+      internalID: 7544171465755676928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_high_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8790df3e6e4136980800000000000000
+      internalID: -8546964685919024776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_high_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10d76c798182cc810800000000000000
+      internalID: 1786847238249938177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_high_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5da68799119fe9f40800000000000000
+      internalID: 5737296829301156565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_high_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60d10a06e9a30ffe0800000000000000
+      internalID: -1157360652333867770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_high_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edbaefd610b7d2960800000000000000
+      internalID: 7578848994005003230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_mid_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8bc3d3511261ab020800000000000000
+      internalID: 2358221686227942584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_mid_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bba2fc6aff73961d0800000000000000
+      internalID: -3357090476073211205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_mid_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95ca1d1872d140fb0800000000000000
+      internalID: -4682585657039541159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_mid_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30bf16567c0083cf0800000000000000
+      internalID: -272466921056503037
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_mid_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6128bafbb5e099560800000000000000
+      internalID: 7320898456487952918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_mid_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e7fe022991ced460800000000000000
+      internalID: 7268459712068122593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_low_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c52ca6ae6cd428e0800000000000000
+      internalID: -1719006789947873848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_low_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8f4b22e6530d2e60800000000000000
+      internalID: 7939005389820612493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_low_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbd8dfe0fbe6f7040800000000000000
+      internalID: 4647555107338948027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_low_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cfe3aa5403e9a04e0800000000000000
+      internalID: -2014623953130471684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_low_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db16fa04cae79bb40800000000000000
+      internalID: 5456531701820776893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_low_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 813a495aead722450800000000000000
+      internalID: 6062546237449872152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_block_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 960
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bf7c1cb222597d00800000000000000
+      internalID: 970897503813402547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_block_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 960
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69701ccde5bfdb190800000000000000
+      internalID: -7944917782762551402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_block_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 960
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cc79e3e36cbea4e0800000000000000
+      internalID: -1968428849902814012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_parry_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76c3f604ee5148b50800000000000000
+      internalID: 6594419867404680295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_parry_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84c4667554f52c480800000000000000
+      internalID: -8880430763797492664
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_parry_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64b1495c85b57acf0800000000000000
+      internalID: -241123618210964666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_parry_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47ce38a896c8db7e0800000000000000
+      internalID: -1748086695426528140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_parry_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 742e8e52dd0bac800800000000000000
+      internalID: 633513161469256263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_hit_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ac8bc771c582a680800000000000000
+      internalID: -8745280460415071064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_hit_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f503135c2ae88c70800000000000000
+      internalID: 8973679733628929520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_hit_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 070c438052d0b94d0800000000000000
+      internalID: -3126891063576051600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_hit_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b407c9834296de70800000000000000
+      internalID: 9139653312566985908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9372d354630fe3c30800000000000000
+      internalID: 4341171206712272697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bc9e90364ea8dd40800000000000000
+      internalID: 5609424952376597683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86a95a9826b77e5b0800000000000000
+      internalID: -5339163170078090648
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ef69289090976490800000000000000
+      internalID: -7753069282792476696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b925e38a04400850800000000000000
+      internalID: 6341143087290853811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa34ebe6ff0a56970800000000000000
+      internalID: 8747574870172124079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Player_Base_fall_6
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2bf7391fb4ad3b00800000000000000
+      internalID: 809984648665365291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SG_Captain_Player_Base_block_0: 970897503813402547
+      SG_Captain_Player_Base_block_1: -7944917782762551402
+      SG_Captain_Player_Base_block_2: -1968428849902814012
+      SG_Captain_Player_Base_fall_0: 4341171206712272697
+      SG_Captain_Player_Base_fall_1: 5609424952376597683
+      SG_Captain_Player_Base_fall_2: -5339163170078090648
+      SG_Captain_Player_Base_fall_3: -7753069282792476696
+      SG_Captain_Player_Base_fall_4: 6341143087290853811
+      SG_Captain_Player_Base_fall_5: 8747574870172124079
+      SG_Captain_Player_Base_fall_6: 809984648665365291
+      SG_Captain_Player_Base_high_0: 7544171465755676928
+      SG_Captain_Player_Base_high_1: -8546964685919024776
+      SG_Captain_Player_Base_high_2: 1786847238249938177
+      SG_Captain_Player_Base_high_3: 5737296829301156565
+      SG_Captain_Player_Base_high_4: -1157360652333867770
+      SG_Captain_Player_Base_high_5: 7578848994005003230
+      SG_Captain_Player_Base_hit_0: -8745280460415071064
+      SG_Captain_Player_Base_hit_1: 8973679733628929520
+      SG_Captain_Player_Base_hit_2: -3126891063576051600
+      SG_Captain_Player_Base_hit_3: 9139653312566985908
+      SG_Captain_Player_Base_idle_0: 1425472564596989744
+      SG_Captain_Player_Base_idle_1: 4684079104919695726
+      SG_Captain_Player_Base_idle_2: -9085890044459010921
+      SG_Captain_Player_Base_idle_3: 3925229748056440306
+      SG_Captain_Player_Base_idle_4: -856274251962234131
+      SG_Captain_Player_Base_idle_5: -34097645777487567
+      SG_Captain_Player_Base_low_0: -1719006789947873848
+      SG_Captain_Player_Base_low_1: 7939005389820612493
+      SG_Captain_Player_Base_low_2: 4647555107338948027
+      SG_Captain_Player_Base_low_3: -2014623953130471684
+      SG_Captain_Player_Base_low_4: 5456531701820776893
+      SG_Captain_Player_Base_low_5: 6062546237449872152
+      SG_Captain_Player_Base_mid_0: 2358221686227942584
+      SG_Captain_Player_Base_mid_1: -3357090476073211205
+      SG_Captain_Player_Base_mid_2: -4682585657039541159
+      SG_Captain_Player_Base_mid_3: -272466921056503037
+      SG_Captain_Player_Base_mid_4: 7320898456487952918
+      SG_Captain_Player_Base_mid_5: 7268459712068122593
+      SG_Captain_Player_Base_parry_0: 6594419867404680295
+      SG_Captain_Player_Base_parry_1: -8880430763797492664
+      SG_Captain_Player_Base_parry_2: -241123618210964666
+      SG_Captain_Player_Base_parry_3: -1748086695426528140
+      SG_Captain_Player_Base_parry_4: 633513161469256263
+      SG_Captain_Player_Base_step_0: -2391575114837713152
+      SG_Captain_Player_Base_step_1: -1452436693997525921
+      SG_Captain_Player_Base_step_2: -8572882723391313765
+      SG_Captain_Player_Base_step_3: 4950248864532940505
+      SG_Captain_Player_Base_step_4: 1464392384499883455
+      SG_Captain_Player_Base_step_5: -1053005385036110094
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

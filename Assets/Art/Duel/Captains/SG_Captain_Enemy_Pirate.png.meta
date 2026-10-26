@@ -1,0 +1,1257 @@
+fileFormatVersion: 2
+guid: 434649016256483a7bd2c33ef36e9d8a
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_idle_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48ac280ca4957f480800000000000000
+      internalID: -8865519163863283068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_idle_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97e17be20981ee2e0800000000000000
+      internalID: -2094709769142591879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_idle_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 165c6cc40ea375da0800000000000000
+      internalID: -5956227247139011231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_idle_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95045b37655e76090800000000000000
+      internalID: -8041206450175524775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_idle_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8e016e2fa974c730800000000000000
+      internalID: 4018470560825675403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_idle_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 2560
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe33d9c3b599546a0800000000000000
+      internalID: -6465593072882469905
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_step_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 501390f9e711828f0800000000000000
+      internalID: -565182517703266043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_step_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21186325813badba0800000000000000
+      internalID: -6063337031261060846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_step_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa3573e12c809ff00800000000000000
+      internalID: 1150960809593492399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_step_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d460c33c987114bf0800000000000000
+      internalID: -341966216249997747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_step_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4155d74cbdfc297f0800000000000000
+      internalID: -607194456940260076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_step_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 2240
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef0d6f2a3c887a3d0800000000000000
+      internalID: -3195435036761992962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_high_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58e2952c865e9dd10800000000000000
+      internalID: 2151002535146106501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_high_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de9ff85b6c7842130800000000000000
+      internalID: 3541104494539438573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_high_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29d757b4fadc21050800000000000000
+      internalID: 5769900225383988626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_high_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9d3246bd17e01570800000000000000
+      internalID: 8435496216862801307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_high_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: acdb5334c81330cb0800000000000000
+      internalID: -4899017491156189750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_high_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 1920
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8f18fdfca497db90800000000000000
+      internalID: -7217136407121748083
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_mid_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ac68695b82ead2d0800000000000000
+      internalID: -3253038692693414743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_mid_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7b17f0f5a1a9b360800000000000000
+      internalID: 7185952414530739069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_mid_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 340fb4e610b2adce0800000000000000
+      internalID: -1379743050690203581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_mid_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7eb24925ac9984fd0800000000000000
+      internalID: -2357465310680568857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_mid_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91c2dee93cb0d1cf0800000000000000
+      internalID: -280054667014231015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_mid_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 1600
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c81af28204ea5090800000000000000
+      internalID: -8044867084905473848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_low_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13ef150e775757c80800000000000000
+      internalID: -8325619178399465935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_low_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6749a133875572a60800000000000000
+      internalID: 7649176466853893238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_low_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15a169452f9268650800000000000000
+      internalID: 6234716854918978129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_low_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 332a6a7de47d97190800000000000000
+      internalID: -7964097732402568653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_low_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cf8978f7fd430ef0800000000000000
+      internalID: -143185035724746814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_low_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 1280
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e899543a3b3117bc0800000000000000
+      internalID: -3787224149382555250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_block_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 960
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a850fb1b26d113500800000000000000
+      internalID: 374112553774548362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_block_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 960
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 391a07cfa8f01f3a0800000000000000
+      internalID: -6633503686524886637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_block_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 960
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d59b81068d5280d0800000000000000
+      internalID: -3422069936715229739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_parry_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2499f18b1b654da30800000000000000
+      internalID: 4239108470560758082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_parry_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b79a5546576d56e0800000000000000
+      internalID: -1847206651923621960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_parry_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b5cba108b329efd0800000000000000
+      internalID: -2312277660469049932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_parry_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e89ffa79f9e91ca30800000000000000
+      internalID: 4233839532986857870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_parry_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 640
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8cc519ba3f0b7cf0800000000000000
+      internalID: -253592209128567669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_hit_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 414842371e0389380800000000000000
+      internalID: -8964361313423424492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_hit_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cc82b36cfd007b50800000000000000
+      internalID: 6588781632498601152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_hit_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 443821303bab0d330800000000000000
+      internalID: 3733689369103598404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_hit_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 320
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca7f1e1dc1c652220800000000000000
+      internalID: 2460491642463975340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68da8dc3a956adb20800000000000000
+      internalID: 3159949801674026374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_1
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a880bb2e020ec72d0800000000000000
+      internalID: -3279499996785080182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_2
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5b8355b867c16a10800000000000000
+      internalID: 1901019770259737439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_3
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de4e8d5a390ef5d40800000000000000
+      internalID: 5575421788455232749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_4
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3662a074a301c47a0800000000000000
+      internalID: -6391715928659581341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_5
+      rect:
+        serializedVersion: 2
+        x: 2560
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55d0309c4fa9199d0800000000000000
+      internalID: -2769261919721026219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SG_Captain_Enemy_Pirate_fall_6
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 0
+        width: 512
+        height: 320
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0e9b8fc18e6229f0800000000000000
+      internalID: -494711505245463026
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SG_Captain_Enemy_Pirate_block_0: 374112553774548362
+      SG_Captain_Enemy_Pirate_block_1: -6633503686524886637
+      SG_Captain_Enemy_Pirate_block_2: -3422069936715229739
+      SG_Captain_Enemy_Pirate_fall_0: 3159949801674026374
+      SG_Captain_Enemy_Pirate_fall_1: -3279499996785080182
+      SG_Captain_Enemy_Pirate_fall_2: 1901019770259737439
+      SG_Captain_Enemy_Pirate_fall_3: 5575421788455232749
+      SG_Captain_Enemy_Pirate_fall_4: -6391715928659581341
+      SG_Captain_Enemy_Pirate_fall_5: -2769261919721026219
+      SG_Captain_Enemy_Pirate_fall_6: -494711505245463026
+      SG_Captain_Enemy_Pirate_high_0: 2151002535146106501
+      SG_Captain_Enemy_Pirate_high_1: 3541104494539438573
+      SG_Captain_Enemy_Pirate_high_2: 5769900225383988626
+      SG_Captain_Enemy_Pirate_high_3: 8435496216862801307
+      SG_Captain_Enemy_Pirate_high_4: -4899017491156189750
+      SG_Captain_Enemy_Pirate_high_5: -7217136407121748083
+      SG_Captain_Enemy_Pirate_hit_0: -8964361313423424492
+      SG_Captain_Enemy_Pirate_hit_1: 6588781632498601152
+      SG_Captain_Enemy_Pirate_hit_2: 3733689369103598404
+      SG_Captain_Enemy_Pirate_hit_3: 2460491642463975340
+      SG_Captain_Enemy_Pirate_idle_0: -8865519163863283068
+      SG_Captain_Enemy_Pirate_idle_1: -2094709769142591879
+      SG_Captain_Enemy_Pirate_idle_2: -5956227247139011231
+      SG_Captain_Enemy_Pirate_idle_3: -8041206450175524775
+      SG_Captain_Enemy_Pirate_idle_4: 4018470560825675403
+      SG_Captain_Enemy_Pirate_idle_5: -6465593072882469905
+      SG_Captain_Enemy_Pirate_low_0: -8325619178399465935
+      SG_Captain_Enemy_Pirate_low_1: 7649176466853893238
+      SG_Captain_Enemy_Pirate_low_2: 6234716854918978129
+      SG_Captain_Enemy_Pirate_low_3: -7964097732402568653
+      SG_Captain_Enemy_Pirate_low_4: -143185035724746814
+      SG_Captain_Enemy_Pirate_low_5: -3787224149382555250
+      SG_Captain_Enemy_Pirate_mid_0: -3253038692693414743
+      SG_Captain_Enemy_Pirate_mid_1: 7185952414530739069
+      SG_Captain_Enemy_Pirate_mid_2: -1379743050690203581
+      SG_Captain_Enemy_Pirate_mid_3: -2357465310680568857
+      SG_Captain_Enemy_Pirate_mid_4: -280054667014231015
+      SG_Captain_Enemy_Pirate_mid_5: -8044867084905473848
+      SG_Captain_Enemy_Pirate_parry_0: 4239108470560758082
+      SG_Captain_Enemy_Pirate_parry_1: -1847206651923621960
+      SG_Captain_Enemy_Pirate_parry_2: -2312277660469049932
+      SG_Captain_Enemy_Pirate_parry_3: 4233839532986857870
+      SG_Captain_Enemy_Pirate_parry_4: -253592209128567669
+      SG_Captain_Enemy_Pirate_step_0: -565182517703266043
+      SG_Captain_Enemy_Pirate_step_1: -6063337031261060846
+      SG_Captain_Enemy_Pirate_step_2: 1150960809593492399
+      SG_Captain_Enemy_Pirate_step_3: -341966216249997747
+      SG_Captain_Enemy_Pirate_step_4: -607194456940260076
+      SG_Captain_Enemy_Pirate_step_5: -3195435036761992962
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
