@@ -105,6 +105,7 @@ namespace SaltGlory {
     // touch: left 30% of the screen is a step stick; elsewhere swipe up / across / down to attack, hold to block, tap to parry
     // launch fix: a swipe fires as soon as it has travelled far enough (no need to see the release), a touch whose release
     // frame is missed still ends, and four on-screen buttons (high / mid / low attack, block) are a fallback for all of it
+    int atkBufH; float atkBufUntil = -1f;
     int dStick = -99, dGest = -99, dBlockBtn = -99; float dStickX, dGestT, dTouchBlockUntil; Vector2 dGestP, dGestLast; bool dGestHold, dGestDone;
     const float SwipeMin = 34f, HoldStill = 30f;   // reference px (x S): a swipe, and how far a hold may wander
     Rect DuelBtn(int i) => i < 3 ? R(780 + i * 104, 574, 96, 70) : R(1096, 574, 164, 70);   // High, Mid, Low, Block (1280x720 UI fit)
@@ -114,7 +115,7 @@ namespace SaltGlory {
       if (!encHostile) BeginBattle(false);   // boarding a neutral is an attack
       ClearFx(); player.speed = enemy.speed = 0f;
       GameAudio.I?.Play("grapple"); GameAudio.I?.SetDuel(true);
-      state = State.Duel; stateT = 0f; duelT = 0f; duelOver = 0; duelResult = ""; ptrs.Clear(); dStick = dGest = dBlockBtn = -99; dTouchBlockUntil = -1f;
+      state = State.Duel; stateT = 0f; duelT = 0f; duelOver = 0; duelResult = ""; ptrs.Clear(); dStick = dGest = dBlockBtn = -99; dTouchBlockUntil = atkBufUntil = -1f;
       // crew sizes set the starting line: more hands push the fight toward the enemy's rail (grape shot pays off here)
       float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * DeckL * 0.25f;
       Init(dp, c - 0.9f, 1); Init(de, c + 0.9f, -1);
@@ -159,7 +160,7 @@ namespace SaltGlory {
           if (b >= 0 && b < 3){ attack = true; attackH = b; Debug.Log($"[SG] duel button {HName[b]} by {src}"); continue; }
           if (b == 3){ dBlockBtn = id; Debug.Log($"[SG] duel button block by {src}"); }
           else if (p.x < Screen.width * 0.3f){ dStick = id; dStickX = p.x; }
-          else { dGest = id; dGestP = dGestLast = p; dGestT = duelT; dGestHold = dGestDone = false; Debug.Log($"[SG] duel touch start by {src} at {p.x:F0},{p.y:F0}"); }
+          else { dGest = id; dGestP = dGestLast = p; dGestT = duelT; dGestHold = dGestDone = false; Debug.Log($"[SG] duel touch start by {src} at {p.x:F0},{p.y:F0} t={duelT:F2}"); }
         }
         if (id == dBlockBtn){ seenBlock = true; if (down) wantBlock = true; else dBlockBtn = -99; }
         else if (id == dStick){ seenStick = true; if (down) move += Mathf.Clamp((p.x - dStickX) / (80f * S), -1f, 1f); else dStick = -99; }
@@ -168,8 +169,15 @@ namespace SaltGlory {
       if (!seenBlock) dBlockBtn = -99; if (!seenStick) dStick = -99;
       if (!seenGest && dGest != -99){ GestureStep(dGestLast, false, "touch", ref attack, ref attackH, ref gBlock); dGest = -99; }   // its release frame was missed
       if (gBlock && !attack) wantBlock = true;   // a guard from a still finger, unless that finger just swiped
-      if (duelT < dTouchBlockUntil) wantBlock = true;
-      Step(dp, de, Mathf.Clamp(move, -1f, 1f), wantBlock, attack ? (attackH >= 0 ? attackH : stance) : stance, attack, dt);
+      // M4 touch fix: any new attack (swipe, button, J / X) cancels a tap's short parry block and is held for 0.3 s until the
+      // captain can swing (mid-swing, staggered), so a quick follow-up after a parry tap is no longer dropped
+      if (attack){ dTouchBlockUntil = -1f; atkBufH = attackH >= 0 ? attackH : stance; atkBufUntil = duelT + 0.3f; }
+      else if (duelT < dTouchBlockUntil) wantBlock = true;
+      attack = false;
+      if (duelT < atkBufUntil && !wantBlock && dp.phase == 0 && dp.stagger <= 0f && dp.fall < 0f){
+        attack = true; attackH = atkBufH; atkBufUntil = -1f; Debug.Log($"[SG] duel attack {HName[attackH]} starts t={duelT:F2}");
+      }
+      Step(dp, de, Mathf.Clamp(move, -1f, 1f), wantBlock, attack ? attackH : stance, attack, dt);
       // the enemy captain
       float gap = de.x - dp.x; float emove = gap > 2.1f ? 1f : gap < 1.5f ? -0.4f : 0f; bool eAttack = false; int eh = 1;
       if (dp.phase == 1 && aiReactAt < 0f){ aiReactAt = duelT + Random.Range(0.09f, 0.17f); aiWillBlock = Random.value < reactP; aiParry = Random.value < parryP; aiGuard = Random.value < smartP ? dp.h : 1; }
@@ -193,7 +201,7 @@ namespace SaltGlory {
       var d = p - dGestP;
       if (!dGestDone && d.magnitude >= SwipeMin * S){
         dGestDone = true; attack = true; attackH = Mathf.Abs(d.y) > Mathf.Abs(d.x) ? (d.y < 0f ? 0 : 2) : 1;
-        Debug.Log($"[SG] duel swipe {HName[attackH]} by {src} ({d.magnitude / S:F0} px)");
+        Debug.Log($"[SG] duel swipe {HName[attackH]} by {src} ({d.magnitude / S:F0} px) t={duelT:F2}");
       }
       if (down){
         if (!dGestDone && d.magnitude < HoldStill * S){
@@ -202,7 +210,7 @@ namespace SaltGlory {
         }
         return false;
       }
-      if (!dGestDone && !dGestHold){ dTouchBlockUntil = duelT + 0.2f; Debug.Log($"[SG] duel tap (parry try) by {src}"); }   // a quick tap: a short block
+      if (!dGestDone && !dGestHold){ dTouchBlockUntil = duelT + 0.2f; Debug.Log($"[SG] duel tap (parry try) by {src} t={duelT:F2}"); }   // a quick tap: a short block
       return true;
     }
     void Step(Fighter f, Fighter o, float move, bool wantBlock, int stance, bool attack, float dt){
@@ -328,8 +336,12 @@ namespace SaltGlory {
       float camX = Mathf.Clamp(((dp.x + de.x) / 2f - DeckL / 2f) / DeckL * (DeckPx(DeckL, 0) - DeckPx(0, 0)) * 0.5f, -60f, 60f);   // the stage camera follows the fight a little
       Box(new Rect(0, 0, W, H), new Color(0.13f, 0.38f, 0.42f));
       if (duelSkyTex && duelDeckTex){
-        GUI.DrawTexture(R(-64 - camX * parSky, 0, 1408, 720), duelSkyTex, ScaleMode.StretchToFill);
-        if (duelSeaTex) GUI.DrawTexture(R(-64 - camX * parSea, 0, 1408, 720), duelSeaTex, ScaleMode.StretchToFill);
+        // M4 touch fix: sky and sea reach the screen edges on wide (mobile) screens instead of leaving teal bars: they are
+        // widened (horizon kept in place) and the sky also fills any band above; the deck art has clear sides, so it stays put
+        float bw = Mathf.Max(1408f * uk, W + 128f * uk), bh = 720f * uk;
+        Rect Back(float par) => new Rect(W / 2f - bw / 2f - camX * par * uk, bgO.y, bw, bh);
+        var sky = Back(parSky); GUI.DrawTexture(new Rect(sky.x, 0f, sky.width, sky.yMax), duelSkyTex, ScaleMode.StretchToFill);
+        if (duelSeaTex){ var sea = Back(parSea); GUI.DrawTexture(new Rect(sea.x, sea.y, sea.width, Mathf.Max(sea.height, H - sea.y)), duelSeaTex, ScaleMode.StretchToFill); }
         GUI.DrawTexture(R(-camX * parDeck, off, 1280, 720), duelDeckTex, ScaleMode.StretchToFill);
       } else {   // fallback: sky, sea, the deck and its rails
         for (int i = 0; i < 12; i++) Box(new Rect(0, H * 0.55f * i / 12f, W, H * 0.55f / 12f + 1), Color.Lerp(new Color(0.55f, 0.72f, 0.82f), new Color(0.92f, 0.86f, 0.72f), i / 11f));
@@ -352,7 +364,7 @@ namespace SaltGlory {
           Label(br, i < 3 ? $"{DuelBtnName[i]}\nattack" : "Block\n(hold)", new GUIStyle(btnSt){ fontSize = Mathf.RoundToInt(16 * uk) }, Ink);
         }
       }
-      Box(R(0, 652, 1280, 68), new Color(0.05f, 0.04f, 0.03f, 0.55f));
+      var hb = R(0, 652, 1280, 68); Box(new Rect(0f, hb.y, W, H - hb.y), new Color(0.05f, 0.04f, 0.03f, 0.55f));
       Label(R(40, 660, 1200, 50), "A/D step  ·  W, Space or S + J: high, mid or low attack  ·  hold K block, tap K just before a hit to parry  ·  Esc pause\nGamepad: stick + X attack, B block  ·  Touch: drag on the left to step, swipe up / across / down or tap the buttons to attack, hold to block, tap to parry",
         new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(14 * uk) }, Parchment);
       if (result){
