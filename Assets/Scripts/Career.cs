@@ -15,6 +15,7 @@ namespace SaltGlory {
     public int shipClass, fame, captures, duelsWon, treasures, missionsDone, mapPieces;
     public int[] service = new int[4], rankSeen = new int[4];   // service under a letter of marque, per nation; the rank each governor last announced
     public bool prize;   // M4: sailing a captured ship (worth less in trade)
+    public long id; public bool retired;   // launch fix: a career id (0 in older saves), and retired careers' slots are locked
     public bool digActive; public float digX, digZ; public string digNear = "";
     public float[] market = new float[0];   // per port x good price pressure: + after buying, - after selling, drifts back to 0
     public static readonly string[] Ranks = { "Ensign", "Lieutenant", "Captain", "Commodore", "Admiral" };   // matches Art Dev's rank icons
@@ -60,10 +61,20 @@ namespace SaltGlory {
       try { var c = JsonUtility.FromJson<Career>(s); c.FixUp(World.Ports.Count); return c; }
       catch { return null; }
     }
-    /// <summary>The most recently saved slot, or -1.</summary>
+    /// <summary>Lock every slot holding career <paramref name="id"/> (if non-zero) and the given slots: marked
+    /// retired, savedAt kept. Returns the locked slot numbers (1-based) as text, e.g. "2" or "1 and 3".</summary>
+    public static string Lock(long id, System.Collections.Generic.List<int> slots){
+      var done = new System.Collections.Generic.List<string>();
+      for (int i = 0; i < Slots; i++){
+        var c = Load(i); if (c == null || c.retired || !(slots.Contains(i) || (id != 0 && c.id == id))) continue;
+        c.retired = true; Set(Key(i), JsonUtility.ToJson(c)); done.Add((i + 1).ToString());
+      }
+      return string.Join(" and ", done);
+    }
+    /// <summary>The most recently saved slot that is not retired, or -1.</summary>
     public static int Latest(){
       int best = -1; string t = "";
-      for (int i = 0; i < Slots; i++){ var c = Load(i); if (c != null && string.CompareOrdinal(c.savedAt, t) > 0){ t = c.savedAt; best = i; } }
+      for (int i = 0; i < Slots; i++){ var c = Load(i); if (c != null && !c.retired && string.CompareOrdinal(c.savedAt, t) > 0){ t = c.savedAt; best = i; } }
       return best;
     }
   }

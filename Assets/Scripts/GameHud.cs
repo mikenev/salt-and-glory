@@ -114,8 +114,17 @@ namespace SaltGlory {
     }
     void SkinFire(Rect r, string label, float ready){
       float left = ready - Time.time; HudButton(r, "");
-      if (left > 0f){ float f = Mathf.Clamp01(left / player.ReloadTime); Box(new Rect(r.x + 10 * S, r.y + 10 * S + (r.height - 20 * S) * (1f - f), r.width - 20 * S, (r.height - 20 * S) * f), new Color(0.5f, 0.15f, 0.1f, 0.4f)); }
-      Label(r, left > 0f ? $"{label}\n{left:F1}s" : label, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(15 * S) }, left > 0f ? new Color(0.45f, 0.3f, 0.2f) : Ink);
+      // launch fix: the reload shade and the label stay inside the parchment window (STARBOARD read 'TARBOAR' over the frame)
+      float b = 0.16f * r.width; var win = new Rect(r.x + b, r.y + b, r.width - 2f * b, r.height - 2f * b);
+      if (left > 0f){ float f = Mathf.Clamp01(left / player.ReloadTime); Box(new Rect(win.x, win.y + win.height * (1f - f), win.width, win.height * f), new Color(0.5f, 0.15f, 0.1f, 0.3f)); }
+      Label(r, left > 0f ? $"{label}\n{left:F1}s" : label, FitStyle(label, win.width - 4f, 15f * S), left > 0f ? new Color(0.32f, 0.16f, 0.08f) : Ink);
+    }
+    /// <summary>Bold centred label style, no wrapping, its font shrunk until the widest line fits <paramref name="w"/>.</summary>
+    GUIStyle FitStyle(string label, float w, float size){
+      var st = new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Overflow };
+      string widest = ""; foreach (var l in label.Split('\n')) if (l.Length > widest.Length) widest = l;
+      for (int fs = Mathf.RoundToInt(size); fs >= 8; fs--){ st.fontSize = fs; if (st.CalcSize(new GUIContent(widest)).x <= w) break; }
+      return st;
     }
 
     // ---------- the treasure fragment: Art Dev's torn template with the real chart around the dig spot in its window ----------
@@ -147,7 +156,7 @@ namespace SaltGlory {
         if (Btn(R(490, 588, 300, 64), "Load")){ titleLoad = true; focus = -1; Debug.Log("[SG] title load menu"); }
       } else {
         PanelBox(R(400, 318, 480, 380));
-        for (int i = 0; i < Saves.Slots; i++){ var c = Saves.Load(i); if (Btn(R(450, 358 + i * 80, 380, 66), SlotLabel(i, c), c != null)) LoadFrom(i); }
+        for (int i = 0; i < Saves.Slots; i++){ var c = Saves.Load(i); if (Btn(R(450, 358 + i * 80, 380, 66), SlotLabel(i, c), c != null && !c.retired)) LoadFrom(i); }
         if (Btn(R(540, 606, 200, 56), "Back")){ titleLoad = false; focus = -1; }
       }
       Box(R(0, 676, 1280, 44), new Color(0.05f, 0.04f, 0.03f, 0.55f));

@@ -103,13 +103,18 @@ namespace SaltGlory {
     float eGrit = 1f;
     string duelResult = ""; float duelOverT;
     // touch: left 30% of the screen is a step stick; elsewhere swipe up / across / down to attack, hold to block, tap to parry
-    int dStick = -99, dGest = -99; float dStickX, dGestT, dTouchBlockUntil; Vector2 dGestP; bool dGestHold;
+    // launch fix: a swipe fires as soon as it has travelled far enough (no need to see the release), a touch whose release
+    // frame is missed still ends, and four on-screen buttons (high / mid / low attack, block) are a fallback for all of it
+    int dStick = -99, dGest = -99, dBlockBtn = -99; float dStickX, dGestT, dTouchBlockUntil; Vector2 dGestP, dGestLast; bool dGestHold, dGestDone;
+    const float SwipeMin = 34f, HoldStill = 30f;   // reference px (x S): a swipe, and how far a hold may wander
+    Rect DuelBtn(int i) => i < 3 ? R(780 + i * 104, 574, 96, 70) : R(1096, 574, 164, 70);   // High, Mid, Low, Block (1280x720 UI fit)
+    static readonly string[] DuelBtnName = { "High", "Mid", "Low", "Block" };
 
     void Board(string src){
       if (!encHostile) BeginBattle(false);   // boarding a neutral is an attack
       ClearFx(); player.speed = enemy.speed = 0f;
       GameAudio.I?.Play("grapple"); GameAudio.I?.SetDuel(true);
-      state = State.Duel; stateT = 0f; duelT = 0f; duelOver = 0; duelResult = ""; ptrs.Clear(); dStick = dGest = -99;
+      state = State.Duel; stateT = 0f; duelT = 0f; duelOver = 0; duelResult = ""; ptrs.Clear(); dStick = dGest = dBlockBtn = -99; dTouchBlockUntil = -1f;
       // crew sizes set the starting line: more hands push the fight toward the enemy's rail (grape shot pays off here)
       float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * DeckL * 0.25f;
       Init(dp, c - 0.9f, 1); Init(de, c + 0.9f, -1);
@@ -118,7 +123,9 @@ namespace SaltGlory {
       bool war = encWarship || encTreasure; float cl = enemy.cls / 4f;
       aggr = war ? 0.62f : encPirate ? 0.58f : 0.5f + 0.1f * cl; reactP = war ? 0.55f : encPirate ? 0.48f : 0.5f + 0.2f * cl;
       parryP = war ? 0.16f : encPirate ? 0.1f : 0.12f + 0.1f * cl; smartP = war ? 0.6f : encPirate ? 0.4f : 0.5f + 0.15f * cl;
-      eGrit = 1f / (1f + (war || encPirate ? 0.15f : 0.45f) * enemy.cls);   // a fluyt's master takes ~2x the hits of a sloop's
+      // pushback factor (how far a landed hit shoves their captain): launch fix, merchants give ground more easily than
+      // warships (fluyt master 0.53 -> 0.82, brigantine 0.90; navy frigate captain stays 0.69, galleon 0.63, pirates 1.0 / 0.87)
+      eGrit = 1f / (1f + (war || encPirate ? 0.15f : 0.11f) * enemy.cls);
       aiT = 1.2f; aiReactAt = -1f;
       Debug.Log($"[SG] boarding {enemy.label} by {src} crew={pc:F0} vs {ec:F0} start={c:F2}");
     }
@@ -144,20 +151,23 @@ namespace SaltGlory {
         if (st.y > 0.5f || gp.dpad.up.isPressed) stance = 0; else if (st.y < -0.5f || gp.dpad.down.isPressed) stance = 2;
         wantBlock |= gp.buttonEast.isPressed; attack |= gp.buttonWest.wasPressedThisFrame;
       }
+      bool seenStick = false, seenGest = false, seenBlock = false, gBlock = false; float uk = Mathf.Min(Screen.width / 1280f, Screen.height / 720f); UseUiFit(Screen.width, Screen.height, uk);
       foreach (var (id, p, began, down) in Pointers()){
         string src = id < 0 ? "mouse" : "touch";
-        if (began){ if (p.x < Screen.width * 0.3f){ dStick = id; dStickX = p.x; } else { dGest = id; dGestP = p; dGestT = duelT; dGestHold = false; } }
-        if (id == dStick){ if (down) move += Mathf.Clamp((p.x - dStickX) / (80f * S), -1f, 1f); else dStick = -99; }
-        else if (id == dGest){
-          var d = p - dGestP;
-          if (down){ if (duelT - dGestT > 0.18f && d.magnitude < 30f * S) dGestHold = true; if (dGestHold) wantBlock = true; }
-          else {
-            if (!dGestHold && d.magnitude >= 50f * S){ attack = true; attackH = Mathf.Abs(d.y) > Mathf.Abs(d.x) ? (d.y < 0f ? 0 : 2) : 1; Debug.Log($"[SG] duel swipe {HName[attackH]} by {src}"); }
-            else if (!dGestHold) dTouchBlockUntil = duelT + 0.25f;   // a quick tap: a short block, i.e. a parry attempt
-            dGest = -99;
-          }
+        if (began){
+          int b = -1; for (int i = 0; i < 4; i++) if (DuelBtn(i).Contains(p)){ b = i; break; }
+          if (b >= 0 && b < 3){ attack = true; attackH = b; Debug.Log($"[SG] duel button {HName[b]} by {src}"); continue; }
+          if (b == 3){ dBlockBtn = id; Debug.Log($"[SG] duel button block by {src}"); }
+          else if (p.x < Screen.width * 0.3f){ dStick = id; dStickX = p.x; }
+          else { dGest = id; dGestP = dGestLast = p; dGestT = duelT; dGestHold = dGestDone = false; Debug.Log($"[SG] duel touch start by {src} at {p.x:F0},{p.y:F0}"); }
         }
+        if (id == dBlockBtn){ seenBlock = true; if (down) wantBlock = true; else dBlockBtn = -99; }
+        else if (id == dStick){ seenStick = true; if (down) move += Mathf.Clamp((p.x - dStickX) / (80f * S), -1f, 1f); else dStick = -99; }
+        else if (id == dGest){ seenGest = true; dGestLast = p; if (GestureStep(p, down, src, ref attack, ref attackH, ref gBlock)) dGest = -99; }
       }
+      if (!seenBlock) dBlockBtn = -99; if (!seenStick) dStick = -99;
+      if (!seenGest && dGest != -99){ GestureStep(dGestLast, false, "touch", ref attack, ref attackH, ref gBlock); dGest = -99; }   // its release frame was missed
+      if (gBlock && !attack) wantBlock = true;   // a guard from a still finger, unless that finger just swiped
       if (duelT < dTouchBlockUntil) wantBlock = true;
       Step(dp, de, Mathf.Clamp(move, -1f, 1f), wantBlock, attack ? (attackH >= 0 ? attackH : stance) : stance, attack, dt);
       // the enemy captain
@@ -174,6 +184,26 @@ namespace SaltGlory {
       Step(de, dp, emove, eBlock, eBlock ? aiGuard : eh, eAttack, dt);
       if (de.block && !wasBlock && !aiParry) de.blockFrom = duelT - 1f;   // a plain block, not timed for a parry
       if (duelOver == 0 && (dp.fall >= 0f || de.fall >= 0f)) EndDuel(de.fall >= 0f);
+    }
+    /// <summary>One frame of the right-hand touch gesture; true when it is over. A finger that is down and still is a guard
+    /// (block) from its first frame, so a quick tap is a short block = a parry try, just like tapping K, and a hold keeps
+    /// blocking; this no longer depends on the frame rate (QA's taps read as holds on slow frames). A swipe fires as soon as
+    /// it has moved SwipeMin: up = high, across = mid, down = low.</summary>
+    bool GestureStep(Vector2 p, bool down, string src, ref bool attack, ref int attackH, ref bool wantBlock){
+      var d = p - dGestP;
+      if (!dGestDone && d.magnitude >= SwipeMin * S){
+        dGestDone = true; attack = true; attackH = Mathf.Abs(d.y) > Mathf.Abs(d.x) ? (d.y < 0f ? 0 : 2) : 1;
+        Debug.Log($"[SG] duel swipe {HName[attackH]} by {src} ({d.magnitude / S:F0} px)");
+      }
+      if (down){
+        if (!dGestDone && d.magnitude < HoldStill * S){
+          wantBlock = true;
+          if (!dGestHold && duelT - dGestT > 0.35f){ dGestHold = true; Debug.Log($"[SG] duel touch hold-block by {src}"); }
+        }
+        return false;
+      }
+      if (!dGestDone && !dGestHold){ dTouchBlockUntil = duelT + 0.2f; Debug.Log($"[SG] duel tap (parry try) by {src}"); }   // a quick tap: a short block
+      return true;
     }
     void Step(Fighter f, Fighter o, float move, bool wantBlock, int stance, bool attack, float dt){
       if (f.fall >= 0f){ f.fall += dt; return; }
@@ -200,10 +230,10 @@ namespace SaltGlory {
         float pb = d.guardH == a.h ? 0.15f : 0.45f; d.x += a.dir * pb; Flash(d, "BLOCK"); GameAudio.I?.Clash();
         Debug.Log($"[SG] duel {who} {HName[a.h]} blocked ({HName[d.guardH]} guard)");
       } else {
-        float push = (1.25f + (d.stagger > 0f ? 0.45f : 0f)) * (d == de ? eGrit : 1f);
+        float push = (1.25f + (d.stagger > 0f ? 0.45f : 0f)) * (d == de ? eGrit : 1f); string guard = d.block ? HName[d.guardH] + " guard" : "no guard";   // read before it is cleared (the log always said "no guard")
         d.x += a.dir * push; a.x += a.dir * push * 0.8f; d.phase = 0; d.block = false; d.stagger = 0.25f;
         Flash(d, "HIT"); GameAudio.I?.Play("body"); GameAudio.I?.Clash();
-        Debug.Log($"[SG] duel hit {(pl ? "enemy" : "player")} {HName[a.h]} vs {(d.block ? HName[d.guardH] + " guard" : "no guard")} px={dp.x:F2} ex={de.x:F2}");
+        Debug.Log($"[SG] duel hit {(pl ? "enemy" : "player")} {HName[a.h]} vs {guard} push={push:F2} px={dp.x:F2} ex={de.x:F2}");
       }
       if (d.x < 0f || d.x > DeckL){ d.fall = 0f; d.x = Mathf.Clamp(d.x, 0f, DeckL); GameAudio.I?.Play("overboard"); Debug.Log($"[SG] duel {(pl ? "enemy" : "player")} captain overboard"); }
     }
@@ -308,21 +338,31 @@ namespace SaltGlory {
       }
       DrawFighter(dp, new Color(0.2f, 0.32f, 0.6f), Sheet(captainPlayer, career.marque >= 0 ? career.marque + 1 : 0), camX, standY);
       DrawFighter(de, encPirate ? new Color(0.2f, 0.2f, 0.2f) : World.NationColor[(int)encNation], Sheet(captainEnemy, encPirate ? 5 : (int)encNation + 1), camX, standY);
-      // header: who, crews
+      bool result = duelOver > 0 && duelT - duelOverT > 1.2f;
+      // header: who, crews (launch fix: the result panel takes its place, up high and clear of the captains)
+      if (!result){
       PanelBox(R(320, 10, 640, 120));
       Label(R(360, 34, 560, 34), $"Boarding the {enemy.label}", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(24 * uk) }, Ink);
       Label(R(360, 70, 560, 26), $"Your crew {player.crew:F0}  vs  theirs {enemy.crew:F0}", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleCenter }, Ink);
+      }
+      if (duelOver == 0){   // launch fix: on-screen attack / block buttons (touch or mouse), lit while in use
+        for (int i = 0; i < 4; i++){
+          bool on = i < 3 ? dp.phase == 1 && dp.h == i : dp.block;
+          var br = DuelBtn(i); SkinStyles(); Slice9(br, hudBtnSt, br.height / BtnArtH, on && buttonDownTex ? buttonDownTex : null);
+          Label(br, i < 3 ? $"{DuelBtnName[i]}\nattack" : "Block\n(hold)", new GUIStyle(btnSt){ fontSize = Mathf.RoundToInt(16 * uk) }, Ink);
+        }
+      }
       Box(R(0, 652, 1280, 68), new Color(0.05f, 0.04f, 0.03f, 0.55f));
-      Label(R(40, 660, 1200, 50), "A/D step  ·  W, Space or S + J: high, mid or low attack  ·  hold K block, tap K just before a hit to parry  ·  Esc pause\nGamepad: stick + X attack, B block  ·  Touch: drag on the left to step, swipe up / across / down to attack, hold to block, tap to parry",
+      Label(R(40, 660, 1200, 50), "A/D step  ·  W, Space or S + J: high, mid or low attack  ·  hold K block, tap K just before a hit to parry  ·  Esc pause\nGamepad: stick + X attack, B block  ·  Touch: drag on the left to step, swipe up / across / down or tap the buttons to attack, hold to block, tap to parry",
         new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(14 * uk) }, Parchment);
-      if (duelOver > 0 && duelT - duelOverT > 1.2f){
-        PanelBox(R(290, 160, 700, 300));
-        Label(R(330, 194, 620, 44), duelOver == 1 ? "Victory!" : "Defeat", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(34 * uk) }, Ink);
-        Label(R(340, 242, 600, 100), duelResult, new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
+      if (result){
+        PanelBox(R(290, 8, 700, 300));
+        Label(R(330, 46, 620, 44), duelOver == 1 ? "Victory!" : "Defeat", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(34 * uk) }, Ink);
+        Label(R(340, 92, 600, 108), duelResult, new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
         if (duelOver == 1){
-          if (Btn(R(340, 360, 290, 60), $"Keep your {player.C.name.ToLower()}")) FinishBoarding(false);
-          if (Btn(R(650, 360, 290, 60), $"Take the {enemy.C.name.ToLower()} (hold {enemy.C.hold})")) FinishBoarding(true);
-        } else if (Btn(R(490, 360, 300, 60), "Back to sea")) FinishBoarding(false);
+          if (Btn(R(340, 206, 290, 58), $"Keep your {player.C.name.ToLower()}")) FinishBoarding(false);
+          if (Btn(R(650, 206, 290, 58), $"Take the {enemy.C.name.ToLower()} (hold {enemy.C.hold})")) FinishBoarding(true);
+        } else if (Btn(R(490, 206, 300, 58), "Back to sea")) FinishBoarding(false);
       }
       if (paused){ Box(new Rect(0, H * 0.36f, W, 100 * s), new Color(0.05f, 0.04f, 0.03f, 0.6f)); Label(new Rect(0, H * 0.36f + 20 * s, W, 60 * s), "Paused", big, Parchment); }
       EndButtons();
