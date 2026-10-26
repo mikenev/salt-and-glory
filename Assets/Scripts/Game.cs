@@ -8,13 +8,14 @@ namespace SaltGlory {
   /// Keyboard, gamepad and touch. HUD is IMGUI.</summary>
   public partial class Game : MonoBehaviour {
     public GameObject sloopModel;
-    public Material playerMat, enemyMat, ballMat, softMat, seaMat;
+    public Material playerMat, ballMat, softMat, seaMat;
+    public GameObject[] classModels = new GameObject[5]; public Material[] classMats = new Material[5];   // M3 ship art by class (null = the sloop stands in)
     public Mesh ballMesh, chainMesh; public Material chainMat;   // chain shot: Art Dev's SG_Shot_Chain sprite on a flat spinning quad
     public Camera cam; public Transform sea;
     public TextAsset landMask, portsJson;   // LandMask.bytes (built from the chart) and SG_Map_Ports.json
 
-    enum State { Title, Sea, Town, Lost }
-    State state = State.Title; bool paused, mapOpen; float stateT;
+    enum State { Title, Sea, Town, Lost, Duel }
+    State state = State.Title; bool paused, mapOpen, logOpen; float stateT;
     Ship player, enemy;
     Career career = new();
     float windBase = 60f, windFrom = 60f;   // degrees the wind blows FROM (0 = from screen-top / +Z)
@@ -23,11 +24,11 @@ namespace SaltGlory {
     Vector3 camFocus; float camDist = 46f;
     string banner = ""; float bannerUntil;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
-    float nextLog; bool devFreezeEnemy, devGod;
+    float nextLog; bool devFreezeEnemy, devGod; int devCls = -1;
 #endif
 
     // ---------- ships met at sea ----------
-    bool encActive, encHostile, encPirate, encWarship, encLegal; Nation encNation; float encStart, nextEncounter, encCourse; Vector3 encPlayerStart;
+    bool encActive, encHostile, encPirate, encWarship, encTreasure, encLegal, encFlee; Nation encNation; float encStart, nextEncounter, encCourse; Vector3 encPlayerStart;
 
     class Ball { public Transform t; public Vector3 v; public Ship from; public Shot type; public float life; public bool sprite; }
     readonly List<Ball> balls = new(); readonly Stack<Transform> ballPool = new(), chainPool = new();
@@ -39,7 +40,7 @@ namespace SaltGlory {
       World.ApplyPortsJson(portsJson ? portsJson.text : null);
       World.BuildMask(landMask ? landMask.bytes : null);
       if (seaMat){ seaMat.SetTexture("_LandTex", World.MaskTex); seaMat.SetVector("_LandRect", new Vector4(World.XMin, World.ZMin, World.W, World.H)); }
-      player = MakeShip("Your sloop", playerMat); enemy = MakeShip("Ship", enemyMat);
+      player = MakeShip("Your sloop", playerMat); enemy = MakeShip("Ship", playerMat); ApplyClass(player, 0); career.FixUp(World.Ports.Count);
       player.Reset(World.WaterNear(World.Ports[0].pos, 30f), 150f, 0.6f); enemy.Hide();
       camFocus = player.Pos;
       smokePS = MakePS("Smoke", -0.05f); splashPS = MakePS("Splash", 1.2f); flashPS = MakePS("Flash", 0f);
@@ -47,6 +48,12 @@ namespace SaltGlory {
       Debug.Log("[SG] ready");
     }
     Ship MakeShip(string n, Material m){ var s = new GameObject(n).AddComponent<Ship>(); s.Init(sloopModel, m, n); return s; }
+    /// <summary>Give a ship a class: Art Dev's model and material for it when present, else the sloop scaled and tinted (placeholder).</summary>
+    void ApplyClass(Ship s, int c){
+      var m = c < classModels.Length ? classModels[c] : null;
+      s.SetClass(c, m ? m : sloopModel, c < classMats.Length && classMats[c] ? classMats[c] : playerMat, !m);
+      if (s == player){ s.label = "Your " + s.C.name.ToLower(); s.SetTint(m ? Color.white : s.C.tint); }
+    }
     ParticleSystem MakePS(string n, float gravity){
       var go = new GameObject(n); var ps = go.AddComponent<ParticleSystem>(); ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
       var m = ps.main; m.loop = false; m.playOnAwake = false; m.simulationSpace = ParticleSystemSimulationSpace.World; m.maxParticles = 800; m.gravityModifier = gravity;
@@ -114,7 +121,7 @@ namespace SaltGlory {
         if (kb.qKey.wasPressedThisFrame) Fire(player, -1, "keyboard");
         if (kb.eKey.wasPressedThisFrame) Fire(player, 1, "keyboard");
         if (kb.tabKey.wasPressedThisFrame) CycleShot("keyboard");
-        if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) TryDock("keyboard");
+        if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Interact("keyboard");
       }
       if (gp != null){
         float x = gp.leftStick.x.ReadValue(); if (Mathf.Abs(x) > 0.2f) steer += x;
@@ -122,7 +129,7 @@ namespace SaltGlory {
         if (gp.leftShoulder.wasPressedThisFrame) Fire(player, -1, "gamepad");
         if (gp.rightShoulder.wasPressedThisFrame) Fire(player, 1, "gamepad");
         if (gp.buttonNorth.wasPressedThisFrame) CycleShot("gamepad");
-        if (gp.buttonSouth.wasPressedThisFrame) TryDock("gamepad");
+        if (gp.buttonSouth.wasPressedThisFrame) Interact("gamepad");
       }
       // touch / mouse: fire buttons, shot button, sail slider, pause, map, dock prompt; drag anywhere else to steer
       touchSteering = false;
@@ -131,11 +138,11 @@ namespace SaltGlory {
         seen.Add(id);
         if (began){
           Role r = RPort.Contains(p) ? Role.Port : RStar.Contains(p) ? Role.Star : RShot.Contains(p) ? Role.ShotBtn : RSlider.Contains(p) ? Role.Slider
-            : RPause.Contains(p) ? Role.Pause : RMap.Contains(p) ? Role.Map : (NearPort(out _) && RDock.Contains(p)) ? Role.Dock : Role.Steer;
+            : RPause.Contains(p) ? Role.Pause : RMap.Contains(p) ? Role.Map : (Prompt() != null && RDock.Contains(p)) ? Role.Dock : Role.Steer;
           ptrs[id] = (r, p.x); string src = id < 0 ? "mouse" : "touch";
           if (r == Role.Port) Fire(player, -1, src); else if (r == Role.Star) Fire(player, 1, src);
           else if (r == Role.ShotBtn) CycleShot(src); else if (r == Role.Pause){ SetPaused(true, src); return; }
-          else if (r == Role.Map){ SetMap(true, src); return; } else if (r == Role.Dock){ TryDock(src); return; }
+          else if (r == Role.Map){ SetMap(true, src); return; } else if (r == Role.Dock){ Interact(src); return; }
           else if (r == Role.Steer) Debug.Log($"[SG] {src} steer start");
         }
         if (!ptrs.TryGetValue(id, out var st)) continue;
@@ -162,21 +169,26 @@ namespace SaltGlory {
     // ---------- loop ----------
     void Update(){
       var kb = Keyboard.current; var gp = Gamepad.current;
+      DriftPrices(Time.deltaTime);
       if (state == State.Title || state == State.Town){ UpdateMenus(kb, gp); return; }
       bool pauseKey = (kb != null && (kb.escapeKey.wasPressedThisFrame || kb.pKey.wasPressedThisFrame)) || (gp != null && gp.startButton.wasPressedThisFrame);
       bool mapKey = (kb != null && kb.mKey.wasPressedThisFrame) || (gp != null && gp.selectButton.wasPressedThisFrame);
+      bool logKey = kb != null && kb.lKey.wasPressedThisFrame;
       if (mapOpen){ if (mapKey || pauseKey || AnyPress()) SetMap(false, "input"); return; }
+      if (logOpen){ if (logKey || pauseKey || AnyPress()){ logOpen = false; Time.timeScale = 1f; Debug.Log("[SG] log closed"); } return; }
       if (paused){ if (pauseKey || AnyPress()) SetPaused(false, "input"); return; }
-      if (state == State.Sea){
+      if (state == State.Sea || state == State.Duel){
         if (pauseKey){ SetPaused(true, "key"); return; }
-        if (mapKey){ SetMap(true, "key"); return; }
+        if (mapKey && state == State.Sea){ SetMap(true, "key"); return; }
+        if (logKey && state == State.Sea){ logOpen = true; Time.timeScale = 0f; ptrs.Clear(); Debug.Log("[SG] log open at sea"); return; }
       }
       float dt = Time.deltaTime; stateT += dt;
       windFrom = windBase + (Mathf.PerlinNoise(Time.time * 0.012f, 3.1f) - 0.5f) * 70f;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
       DevKeys(kb);
 #endif
-      if (state == State.Sea) HandlePlayerInput(dt); else player.rudder = 0f;
+      if (state == State.Duel){ UpdateDuel(kb, gp, dt); return; }
+      if (state == State.Sea){ HandlePlayerInput(dt); UpdateDig(dt); } else player.rudder = 0f;
       if (state == State.Lost && stateT > 2.5f && AnyPress()){ WashAshore(); return; }
       if (state != State.Sea && state != State.Lost) return;
       Encounters(); EnemyAI();
@@ -197,12 +209,23 @@ namespace SaltGlory {
       Debug.Log($"[SG] status state={state} speed={player.speed:F1} heading={player.heading:F0} windFrom={windFrom:F0} sail={player.sail:F2} eff={Ship.WindFactor(player.OffWind(windFrom)):F2} " +
         $"enc={(encActive ? 1 : 0)} hostile={(encHostile ? 1 : 0)} dist={(encActive ? Vector3.Distance(player.Pos, enemy.Pos) : -1f):F0} side={(el.x > 0f ? 1 : -1)} offBeam={Mathf.Atan2(el.z, Mathf.Abs(el.x)) * Mathf.Rad2Deg:F0} " +
         $"hull={player.hull:F0} sails={player.sails:F0} crew={player.crew:F0} enemyHull={(encActive ? enemy.hull : 0f):F0} gold={career.gold} hold={career.Hold} port={(np != null ? np.name : "-")} " +
-        $"rep={career.rep[0]},{career.rep[1]},{career.rep[2]},{career.rep[3]} marque={career.marque} x={player.Pos.x:F0} z={player.Pos.z:F0} ex={enemy.Pos.x:F0} ez={enemy.Pos.z:F0}");
+        $"rep={career.rep[0]},{career.rep[1]},{career.rep[2]},{career.rep[3]} marque={career.marque} x={player.Pos.x:F0} z={player.Pos.z:F0} ex={enemy.Pos.x:F0} ez={enemy.Pos.z:F0} " +
+        $"cls={player.cls} ecls={enemy.cls} ecrew={enemy.crew:F0} fame={career.fame} pieces={career.mapPieces} dig={(career.digActive ? 1 : 0)} digx={career.digX:F0} digz={career.digZ:F0} " +
+        $"board={(CanBoard() ? 1 : 0)} duel={(state == State.Duel ? 1 : 0)} {DuelStatus()}");
     }
     void Aground(Ship s, Vector3 prev){
       if (s.gone || s.sinking) return;
-      if (World.Land(s.Pos + s.Fwd * 6f) > 0.42f || World.Land(s.Pos) > 0.42f){
-        s.transform.position = prev; if (s.speed > 2f && s == player) Debug.Log("[SG] aground: turn away from the shore"); s.speed = Mathf.Min(s.speed, 0.6f);
+      float bow = 6f * s.transform.localScale.x; bool blocked = false;
+      if (World.Land(s.Pos + s.Fwd * bow) > 0.42f || World.Land(s.Pos) > 0.42f){
+        s.transform.position = prev; blocked = true; if (s.speed > 2f && s == player) Debug.Log("[SG] aground: turn away from the shore"); s.speed = Mathf.Min(s.speed, 0.6f);
+      }
+      // push-out: when blocked, or when the hull sits in the shore band (a narrow inlet, a turn against the coast), ease the ship
+      // down the slope of the land mask into open water so it can never be pinned (M2 QA: the inlet north of Port Royal)
+      float here = World.Land(s.Pos);
+      if (blocked || here > 0.2f){
+        const float e = 6f; var p = s.Pos;
+        var g = new Vector3(World.Land(p + Vector3.right * e) - World.Land(p - Vector3.right * e), 0f, World.Land(p + Vector3.forward * e) - World.Land(p - Vector3.forward * e));
+        if (g.sqrMagnitude > 1e-6f) s.transform.position -= g.normalized * (1f + here * 3f) * Time.deltaTime * 2.5f;
       }
     }
 
@@ -211,36 +234,45 @@ namespace SaltGlory {
       if (state != State.Sea) return;
       if (encActive){
         float d = Vector3.Distance(player.Pos, enemy.Pos);
-        if (enemy.gone){ encActive = false; nextEncounter = Time.time + Random.Range(30f, 50f); return; }
+        if (enemy.gone){ encActive = false; GameAudio.I?.SetBattle(false); nextEncounter = Time.time + Random.Range(30f, 50f); return; }
         if (!enemy.sinking && d > 290f){
           if (encHostile) PatchUp("escaped");
-          Debug.Log($"[SG] lost sight of {enemy.label}"); Banner($"The {enemy.label} is lost from sight"); encActive = false; enemy.Hide(); nextEncounter = Time.time + Random.Range(30f, 50f);
+          GameAudio.I?.SetBattle(false); Debug.Log($"[SG] lost sight of {enemy.label}"); Banner($"The {enemy.label} is lost from sight"); encActive = false; enemy.Hide(); nextEncounter = Time.time + Random.Range(30f, 50f);
         }
         return;
       }
       if (Time.time < nextEncounter || NearPort(out _, 110f)) return;
       // a sail on the horizon: mostly ships of the nearest port's nation, sometimes another power's, sometimes pirates
       var near = NearestPort(player.Pos); float r = Random.value;
-      encPirate = r < 0.15f; encNation = r < 0.6f ? near.nation : (Nation)Random.Range(0, 4); encWarship = !encPirate && Random.value < 0.35f;
+      encPirate = r < 0.15f; encNation = r < 0.6f ? near.nation : (Nation)Random.Range(0, 4); float role = Random.value;
+      encTreasure = !encPirate && role < 0.12f; if (encTreasure) encNation = Nation.Spain;   // the treasure fleets are Spanish
+      encWarship = !encPirate && !encTreasure && role < 0.45f;
       Vector3 at = Vector3.zero; bool found = false;
       for (int i = 0; i < 16 && !found; i++){ at = player.Pos + Quaternion.Euler(0f, Random.Range(0f, 360f), 0f) * Vector3.forward * 150f; found = World.Land(at) < 0.05f; }
       if (!found){ nextEncounter = Time.time + 8f; return; }
       SpawnEncounter(at, Mathf.Atan2(player.Pos.x - at.x, player.Pos.z - at.z) * Mathf.Rad2Deg + Random.Range(-50f, 50f));
     }
-    void SpawnEncounter(Vector3 at, float hdg){
-      enemy.Reset(at, hdg, 0.75f); enemy.maxSpeed = encWarship ? 10.5f : 9f; enemy.reloadBase = encWarship ? 4.4f : 5.2f; enemy.turnRate = 34f;
-      enemy.label = encPirate ? "Pirate sloop" : $"{World.Adj[(int)encNation]} {(encWarship ? "warship" : "merchant")}";
-      enemy.SetTint(encPirate ? new Color(0.5f, 0.47f, 0.45f) : Color.Lerp(Color.white, World.NationColor[(int)encNation], 0.4f));
-      encActive = true; encHostile = false; encLegal = true;
+    /// <summary>Ship class by role: merchants sail fluyts (some brigantines), warships frigates, treasure fleets galleons,
+    /// pirates sloops or brigantines.</summary>
+    int RoleClass() => encTreasure ? ShipClass.Galleon : encWarship ? ShipClass.Frigate : encPirate ? (Random.value < 0.55f ? ShipClass.Sloop : ShipClass.Brigantine)
+      : Random.value < 0.75f ? ShipClass.Fluyt : ShipClass.Brigantine;
+    void SpawnEncounter(Vector3 at, float hdg, int cls = -1){
+      ApplyClass(enemy, cls >= 0 ? cls : RoleClass());
+      enemy.Reset(at, hdg, 0.75f); enemy.maxSpeed *= encWarship || encPirate ? 0.95f : 0.85f; enemy.reloadBase *= encWarship ? 1.35f : 1.6f;   // AI ships a little slower and slower to load
+      string cn = enemy.C.name.ToLower();
+      enemy.label = encPirate ? $"Pirate {cn}" : encTreasure ? "Spanish treasure galleon" : $"{World.Adj[(int)encNation]} {(encWarship ? "warship" : "merchant")} {cn}";
+      var placeholder = classModels[enemy.cls] == null;
+      enemy.SetTint((encPirate ? new Color(0.5f, 0.47f, 0.45f) : Color.Lerp(Color.white, World.NationColor[(int)encNation], 0.4f)) * (placeholder ? enemy.C.tint : Color.white));
+      encActive = true; encHostile = false; encLegal = true; encFlee = !encWarship && !encPirate;
       encCourse = hdg;
       bool war = career.marque >= 0 && World.AtWar((Nation)career.marque, encNation);
-      Debug.Log($"[SG] sail ho: {enemy.label} dist={Vector3.Distance(at, player.Pos):F0}");
+      Debug.Log($"[SG] sail ho: {enemy.label} class={enemy.C.name} dist={Vector3.Distance(at, player.Pos):F0}");
       if (encPirate || (encWarship && (career.IsHostile(encNation) || war))) BeginBattle(true);
       else Banner($"Sail ho! A {enemy.label}. Fire on her to attack" + (war ? " (legal under your letter of marque)" : ""));
     }
     /// <summary>The encounter turns into a fight: either they attack us (hostile on sight) or we attacked them.</summary>
     void BeginBattle(bool theyAttack){
-      encHostile = true; encStart = Time.time; encPlayerStart = player.Pos;
+      encHostile = true; encStart = Time.time; encPlayerStart = player.Pos; GameAudio.I?.SetBattle(true);
       if (theyAttack){ Banner($"The {enemy.label} runs out her guns!"); Debug.Log($"[SG] battle started at sea by {enemy.label}"); return; }
       // we fired first: legal against the enemies of our patron, piracy otherwise
       bool legal = encPirate || (career.marque >= 0 && World.AtWar((Nation)career.marque, encNation)); encLegal = legal;
@@ -266,7 +298,8 @@ namespace SaltGlory {
       if (!encHostile){   // a neutral holds her course, bearing away from any shore ahead
         if (World.Land(e.Pos + e.Fwd * 30f) > 0.2f) encCourse = e.heading + 70f;
         desired = encCourse; e.sail = 0.7f;
-      } else if (dist > 60f) desired = bearing;
+      } else if (encFlee && !e.mastDown && e.sails > 30f) desired = bearing + 180f;   // merchants and treasure ships run for it
+      else if (dist > 60f) desired = bearing;
       else {
         // run parallel-ish to bring a broadside to bear, closing in when far and opening out when close
         float a1 = bearing + 90f, a2 = bearing - 90f;
@@ -278,9 +311,9 @@ namespace SaltGlory {
       if (Mathf.Abs(off) < 42f) desired = windFrom + (off >= 0f ? 42f : -42f);
       e.rudder = Mathf.Clamp(Mathf.DeltaAngle(e.heading, desired) / 25f, -1f, 1f);
       if (!encHostile) return;
-      e.sail = dist > 60f ? 0.9f : 0.65f;
-      // first volley waits ~25 s, or until she is in range and the player has got under way
-      bool mayFire = Time.time - encStart > 25f || (dist < 62f && Vector3.Distance(player.Pos, encPlayerStart) > 20f);
+      e.sail = encFlee ? 1f : dist > 60f ? 0.9f : 0.65f;
+      // first volley waits ~25 s, or until she is in range AND at least 15 s have passed (M2 QA)
+      float since = Time.time - encStart; bool mayFire = since > 25f || (dist < 62f && since >= 15f);
       if (mayFire && dist < 62f){
         var local = e.transform.InverseTransformPoint(player.Pos);
         float offBeam = Mathf.Abs(Mathf.Atan2(local.z, Mathf.Abs(local.x)) * Mathf.Rad2Deg);
@@ -295,7 +328,8 @@ namespace SaltGlory {
     void Separate(){
       if (enemy.gone) return;
       Vector3 d = enemy.Pos - player.Pos; d.y = 0f; float m = d.magnitude;
-      if (m < 11f && m > 0.01f){ var push = d / m * (11f - m) * 0.5f; enemy.transform.position += push; player.transform.position -= push; player.speed *= 0.97f; enemy.speed *= 0.97f; }
+      float sep = 5.5f * (player.transform.localScale.x + enemy.transform.localScale.x);
+      if (m < sep && m > 0.01f){ var push = d / m * (sep - m) * 0.5f; enemy.transform.position += push; player.transform.position -= push; player.speed *= 0.97f; enemy.speed *= 0.97f; }
     }
 
     // ---------- guns ----------
@@ -332,6 +366,7 @@ namespace SaltGlory {
       var go = new GameObject(chain ? "ChainShot" : "Ball"); go.AddComponent<MeshFilter>().sharedMesh = chain ? chainMesh : ballMesh; go.AddComponent<MeshRenderer>().sharedMaterial = chain ? chainMat : ballMat;
       return go.transform;
     }
+    void ClearBalls(Ship from){ for (int i = balls.Count - 1; i >= 0; i--) if (balls[i].from == from){ Recycle(balls[i]); balls.RemoveAt(i); } }
     void Recycle(Ball b){ b.t.gameObject.SetActive(false); (b.sprite ? chainPool : ballPool).Push(b.t); }
     void UpdateBalls(float dt){
       for (int i = balls.Count - 1; i >= 0; i--){
@@ -356,12 +391,14 @@ namespace SaltGlory {
       if (s == player && devGod) return;
 #endif
       if (s == enemy && encActive && !encHostile) BeginBattle(false);   // firing on a neutral is an attack
-      float k = s == player ? 0.7f : 1f;   // the enemy's gunners are weaker, so a fair fight favours the player
+      var from = s == player ? enemy : player;
+      float k = (s == player ? 0.7f : 1f) * from.C.gunK, hk = k / s.C.hullK, ck = k / Mathf.Sqrt(s.C.hullK) * s.Complement / 100f;   // classes: guns hit harder, hulls take less
       switch (type){
-        case Shot.Round: s.hull -= 8f * k * (s == player ? 0.7f : 1f); s.crew -= 1.5f * k; break;   // enemy round shot ~30% lighter (M1 QA)
-        case Shot.Chain: s.sails -= 13f * k; s.hull -= 2f * k; break;
-        case Shot.Grape: s.crew -= 9f * k; s.hull -= 1.5f * k; break;
+        case Shot.Round: s.hull -= 8f * hk * (s == player ? 0.7f : 1f); s.crew -= 1.5f * ck; break;   // enemy round shot ~30% lighter (M1 QA)
+        case Shot.Chain: s.sails -= 13f * k / Mathf.Sqrt(s.C.hullK); s.hull -= 2f * hk; break;
+        case Shot.Grape: s.crew -= 9f * ck; s.hull -= 1.5f * hk; break;
       }
+      if (!s.mastDown && s.sails < 30f){ s.mastDown = true; GameAudio.I?.Play("mast"); Debug.Log($"[SG] mast down on {(s == player ? "player" : "enemy")}"); if (s == enemy) Banner($"Her mainmast goes by the board! The {enemy.label} is slowed"); }
       s.hull = Mathf.Max(0f, s.hull); s.sails = Mathf.Max(0f, s.sails); s.crew = Mathf.Max(0f, s.crew);
       GameAudio.I?.Play("hit", s == player ? 1f : Mathf.Clamp01(1.2f - Vector3.Distance(s.Pos, player.Pos) / 140f));
       for (int i = 0; i < 4; i++) Emit(splashPS, p, Random.insideUnitSphere * 4f + Vector3.up * 3f, Random.Range(0.35f, 0.6f), 0.8f, new Color(0.45f, 0.3f, 0.18f, 1f));   // splinters
@@ -372,16 +409,17 @@ namespace SaltGlory {
     void Sink(Ship s){
       s.sinking = true; s.rudder = 0f;
       if (s == enemy){
-        career.victories++;
+        ClearBalls(enemy);   // her shots still in the air fall harmlessly (M2 QA)
+        career.victories++; career.fame += 5; GameAudio.I?.SetBattle(false); GameAudio.I?.Play("cheer");
         int gold = encWarship ? Random.Range(120, 200) : encPirate ? Random.Range(220, 320) : Random.Range(180, 320); career.gold += gold;
         string loot = "";
-        if (!encWarship){ int g = Random.Range(0, 5), n = Mathf.Min(Random.Range(4, 11), Career.HoldSize - career.Hold); if (n > 0){ career.cargo[g] += n; loot = $", {n} {World.Goods[g]}"; } }
-        if (!encPirate && encLegal && career.marque >= 0 && World.AtWar((Nation)career.marque, encNation)) career.AddRep((Nation)career.marque, 6);
+        if (!encWarship){ int g = Random.Range(0, 5), n = Mathf.Min(Random.Range(4, 11), career.HoldMax - career.Hold); if (n > 0){ career.cargo[g] += n; loot = $", {n} {World.Goods[g]}"; } }
+        if (!encPirate && encLegal && career.marque >= 0 && World.AtWar((Nation)career.marque, encNation)){ career.AddRep((Nation)career.marque, 6); career.Serve(6); }
         if (!encPirate && career.missionTarget == (int)encNation && !career.missionDone){ career.missionDone = true; loot += ". Mission done: report to the governor"; Debug.Log("[SG] mission target sunk"); }
         PatchUp("victory"); GameAudio.I?.Play("coins");
         Banner($"Prize! The {enemy.label} goes down. +{gold} gold{loot}", 6f);
         Debug.Log($"[SG] enemy sunk victories={career.victories} gold={career.gold} hold={career.Hold}");
-      } else { state = State.Lost; stateT = 0f; Debug.Log("[SG] player sunk"); }
+      } else { state = State.Lost; stateT = 0f; GameAudio.I?.SetBattle(false); Debug.Log("[SG] player sunk"); }
       StartCoroutine(SinkSmoke(s));
     }
     IEnumerator SinkSmoke(Ship s){
@@ -403,6 +441,11 @@ namespace SaltGlory {
       if (kb.f2Key.wasPressedThisFrame){ devFreezeEnemy = !devFreezeEnemy; Debug.Log($"[SG] dev: freeze enemy {devFreezeEnemy}"); }
       if (kb.f3Key.wasPressedThisFrame){ devGod = !devGod; Debug.Log($"[SG] dev: god {devGod}"); }
       if (kb.f4Key.wasPressedThisFrame){ nextEncounter = 0f; Debug.Log("[SG] dev: encounter now"); }
+      if (kb.f5Key.wasPressedThisFrame){   // the next ship class alongside to starboard (neutral)
+        devCls = (devCls + 1) % ShipClass.All.Length; encPirate = encWarship = encTreasure = false; encNation = Nation.France;
+        SpawnEncounter(player.Pos + player.Right * 40f, player.heading, devCls); Debug.Log($"[SG] dev: class {ShipClass.All[devCls].name} alongside");
+      }
+      if (kb.f6Key.wasPressedThisFrame){ GainPiece("dev"); }
     }
 #endif
 
@@ -465,8 +508,9 @@ namespace SaltGlory {
         Box(new Rect(g.x - 7 * s, g.y - 7 * s, 14 * s, 14 * s), World.NationColor[(int)pt.nation]);
         Label(new Rect(g.x - 120 * s, g.y + 8 * s, 240 * s, 24 * s), pt.name + (career.IsHostile(pt.nation) ? " (hostile)" : ""), new GUIStyle(txt){ alignment = TextAnchor.UpperCenter }, Parchment);
       }
+      if (state == State.Duel){ DuelGUI(s, W, H); return; }
       if (encActive && !enemy.gone){
-        var sp = cam.WorldToScreenPoint(enemy.Pos + Vector3.up * 14f);
+        var sp = cam.WorldToScreenPoint(enemy.Pos + Vector3.up * 14f * enemy.transform.localScale.x);
         if (sp.z > 0) Label(new Rect(sp.x - 150 * s, H - sp.y - 24 * s, 300 * s, 24 * s), enemy.label, new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }, encHostile ? new Color(1f, 0.6f, 0.5f) : Parchment);
       }
       // wind compass (top-left): arrow points where the wind blows
@@ -483,7 +527,7 @@ namespace SaltGlory {
       Bar(146 * s, 66 * s, 150 * s, "Hull", player.hull, new Color(0.85f, 0.55f, 0.3f));
       Bar(146 * s, 84 * s, 150 * s, "Sails", player.sails, new Color(0.92f, 0.88f, 0.75f));
       Bar(146 * s, 102 * s, 150 * s, "Crew", player.crew, new Color(0.6f, 0.8f, 0.55f));
-      Label(new Rect(146 * s, 120 * s, 240 * s, 24 * s), $"Gold {career.gold}   Hold {career.Hold}/{Career.HoldSize}", small, Parchment);
+      Label(new Rect(146 * s, 120 * s, 240 * s, 24 * s), $"Gold {career.gold}   Hold {career.Hold}/{career.HoldMax}   Fame {career.fame}", small, Parchment);
       if (encActive && !enemy.gone){
         float d = Vector3.Distance(player.Pos, enemy.Pos);
         Box(new Rect(W - 296 * s, 16 * s, 280 * s, 92 * s), Panel);
@@ -496,10 +540,18 @@ namespace SaltGlory {
       // nearest port: pointer when far, dock prompt (Enter / A / tap) when close
       var near = NearestPort(player.Pos); float nd = Vector3.Distance(player.Pos, near.pos);
       if (nd > 140f) EdgeArrow(near.pos, new Color(0.96f, 0.9f, 0.76f, 0.75f), s, W, H);
-      if (NearPort(out var dp)){
+      if (career.digActive){   // the dig site from the four map pieces
+        var dg = new Vector3(career.digX, 0f, career.digZ); float dd = Vector3.Distance(player.Pos, dg);
+        if (dd > 90f) EdgeArrow(dg, new Color(0.95f, 0.75f, 0.2f, 0.9f), s, W, H);
+        else { var sp = cam.WorldToScreenPoint(dg); if (sp.z > 0){ var g = new Vector2(sp.x, H - sp.y); if (digMarkTex) GUI.DrawTexture(new Rect(g.x - 24 * s, g.y - 24 * s, 48 * s, 48 * s), digMarkTex); else Label(new Rect(g.x - 30 * s, g.y - 24 * s, 60 * s, 48 * s), "X", new GUIStyle(big){ fontSize = Mathf.RoundToInt(40 * s) }, new Color(0.75f, 0.1f, 0.06f)); } }
+      }
+      string prompt = Prompt();
+      if (prompt != null){
         var rd = RDock; Box(rd, new Color(0.25f, 0.17f, 0.08f, 0.85f));
-        Label(rd, $"Dock at {dp.name}  (Enter / A / tap)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      } else Label(new Rect(W / 2f - 250 * s, H - 116 * s, 500 * s, 26 * s), $"Nearest port: {near.name} ({World.Adj[(int)near.nation]}) {nd:F0} m   ·   M map", new GUIStyle(small){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        Label(rd, prompt + "  (Enter / A / tap)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+      }
+      // the nearest port sits under the pause and map buttons, clear of the ship (M2 QA)
+      if (!NearPort(out _)) Label(new Rect(W / 2f - 250 * s, 66 * s, 500 * s, 24 * s), $"Nearest port: {near.name} ({World.Adj[(int)near.nation]}) {nd:F0} m   ·   M map   ·   L log" + (career.digActive ? "   ·   dig site marked" : ""), new GUIStyle(small){ alignment = TextAnchor.MiddleCenter }, Parchment);
       // touch controls (also clickable)
       DrawFire(RPort, "PORT\n(Q)", player.portReady); DrawFire(RStar, "STARBOARD\n(E)", player.starReady);
       var rs = RShot; Box(rs, Panel); Label(rs, $"Shot: {shot}  (Tab)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
@@ -509,13 +561,15 @@ namespace SaltGlory {
       var rp = RPause; Box(rp, Panel); Label(rp, "II", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
       var rm = RMap; Box(rm, Panel); Label(rm, "MAP", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
 
+      TreasureGUI(s, W, H);
       if (Time.unscaledTime < bannerUntil && !mapOpen){
         Box(new Rect(W / 2f - 380 * s, 150 * s, 760 * s, 40 * s), new Color(0.05f, 0.04f, 0.03f, 0.6f));
         Label(new Rect(W / 2f - 380 * s, 150 * s, 760 * s, 40 * s), banner, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, wordWrap = true }, Parchment);
       }
       if (mapOpen){ MapGUI(s, W, H); return; }
+      if (logOpen){ Styles(s); UseUiFit(W, H, Mathf.Min(W / 1280f, H / 720f)); LogGUI(); return; }
       if (paused || state == State.Lost){
-        string head = paused ? "Paused" : "Your sloop went down";
+        string head = paused ? "Paused" : $"Your {player.C.name.ToLower()} went down";
         string sub = paused ? "Esc, Start, Enter or tap to resume" : stateT > 2.5f ? "Enter or tap: wash ashore at a friendly port" : "";
         Box(new Rect(0, H * 0.36f, W, 120 * s), new Color(0.05f, 0.04f, 0.03f, 0.6f));
         Label(new Rect(0, H * 0.36f + 8 * s, W, 60 * s), head, big, Parchment);
