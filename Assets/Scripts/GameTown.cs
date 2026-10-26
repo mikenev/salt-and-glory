@@ -314,7 +314,7 @@ namespace SaltGlory {
       else {
         Label(R(200, 306, 880, 50), $"A letter of marque against the {enemies}" + (career.marque >= 0 ? $" (replaces your {World.Adj[career.marque]} letter)" : ""), inkSt, Ink);
         if (Btn(R(200, 350, 360, 52), "Accept the letter of marque")){
-          career.marque = ni; career.AddRep(n, 5); townMsg = $"You now sail as a {World.Adj[ni]} privateer.";
+          career.marque = ni; career.AddRep(n, 5); SetLook(player, ni + 1); townMsg = $"You now sail as a {World.Adj[ni]} privateer.";
           Debug.Log($"[SG] marque {World.Adj[ni]} rep={string.Join(",", career.rep)}");
         }
       }

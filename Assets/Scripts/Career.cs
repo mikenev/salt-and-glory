@@ -16,7 +16,7 @@ namespace SaltGlory {
     public int[] service = new int[4], rankSeen = new int[4];   // service under a letter of marque, per nation; the rank each governor last announced
     public bool digActive; public float digX, digZ; public string digNear = "";
     public float[] market = new float[0];   // per port x good price pressure: + after buying, - after selling, drifts back to 0
-    public static readonly string[] Ranks = { "Ensign", "Captain", "Major", "Colonel", "Admiral" };
+    public static readonly string[] Ranks = { "Ensign", "Lieutenant", "Captain", "Commodore", "Admiral" };   // matches Art Dev's rank icons
     static readonly int[] RankAt = { 0, 25, 60, 120, 200 };
     /// <summary>Rank index under a nation (0 Ensign .. 4 Admiral), or -1 if you have never served it under a letter of marque.</summary>
     public int Rank(int n){ if (marque != n && service[n] <= 0) return -1; int r = 0; for (int i = 0; i < RankAt.Length; i++) if (service[n] >= RankAt[i]) r = i; return r; }

@@ -20,7 +20,7 @@ namespace SaltGlory {
     }
 
     // ---------- the Enter / A / tap prompt at sea: board > dig > dock ----------
-    float BoardRange => 14f + 6f * enemy.transform.localScale.x;
+    float BoardRange => 10f + player.halfW * player.transform.localScale.x + 2f * enemy.halfW * enemy.transform.localScale.x;
     bool CanBoard() => state == State.Sea && encActive && !enemy.gone && !enemy.sinking && !player.sinking && Vector3.Distance(player.Pos, enemy.Pos) < BoardRange;
     bool NearDig() => state == State.Sea && career.digActive && digT < 0f && Vector3.Distance(player.Pos, new Vector3(career.digX, 0f, career.digZ)) < 32f;
     string Prompt(){

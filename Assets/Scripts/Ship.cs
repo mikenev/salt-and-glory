@@ -31,7 +31,8 @@ namespace SaltGlory {
     public int cls; public ShipClass C => ShipClass.All[cls];
     public readonly List<Vector3> portGuns = new(), starGuns = new();   // gun muzzle points in ship-root space
     Transform model; GameObject modelSrc; readonly List<(Transform t, Vector3 s, int ax)> sailParts = new();
-    float heel, bobSeed; Color tint = Color.white;
+    float heel, bobSeed; Color tint = Color.white; Texture look;
+    public float halfW = 2.9f, halfL = 7.2f, height = 14f;   // hull extents (root space, unscaled) for hits, spacing, the bow probe and labels
 
     public Vector3 Pos => transform.position;
     public Vector3 Fwd => transform.forward;
@@ -56,12 +57,14 @@ namespace SaltGlory {
           var lp = transform.InverseTransformPoint(gr.bounds.center); (lp.x < 0 ? portGuns : starGuns).Add(lp);
         }
       }
+      var b = new Bounds(transform.position, Vector3.zero); foreach (var r in model.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+      if (b.size.x > 0.5f){ var hullB = b; halfW = Mathf.Clamp(hullB.extents.x * 0.75f, 2.2f, 9f); halfL = Mathf.Clamp(hullB.extents.z * 0.85f, 5f, 24f); height = Mathf.Max(8f, hullB.max.y - transform.position.y); }
       transform.localScale = keep;
       if (portGuns.Count == 0 || starGuns.Count == 0){   // a model without Gun_ nodes: four guns a side along the hull
         Debug.LogWarning($"[SG] {label}: gun nodes missing, using hull points");
         portGuns.Clear(); starGuns.Clear(); for (int i = 0; i < 4; i++){ float z = -3f + i * 2f; portGuns.Add(new Vector3(-2.2f, 1.2f, z)); starGuns.Add(new Vector3(2.2f, 1.2f, z)); }
       }
-      SetTint(tint);
+      SetLook(look, tint);
     }
     /// <summary>Make this ship a given class: speed, turning, reload, its model if Art Dev has delivered one (else the sloop scaled).</summary>
     public void SetClass(int c, GameObject prefab, Material mat, bool placeholder){
@@ -81,8 +84,10 @@ namespace SaltGlory {
     /// <summary>Take the ship off the sea (no encounter).</summary>
     public void Hide(){ gone = true; sinking = false; gameObject.SetActive(false); }
     /// <summary>Per-ship tint over the shared material (nation and class tints until each class has its own art).</summary>
-    public void SetTint(Color c){
-      tint = c; var mpb = new MaterialPropertyBlock(); mpb.SetColor("_Tint", c);
+    public void SetTint(Color c) => SetLook(look, c);
+    /// <summary>M3: the albedo for this ship's nation (Art Dev's baked variants: nation trim, ensign, tarred pirate sails) and a tint.</summary>
+    public void SetLook(Texture albedo, Color c){
+      tint = c; look = albedo; var mpb = new MaterialPropertyBlock(); mpb.SetColor("_Tint", c); if (albedo) mpb.SetTexture("_MainTex", albedo);
       foreach (var r in GetComponentsInChildren<Renderer>(true)) r.SetPropertyBlock(mpb);
     }
 

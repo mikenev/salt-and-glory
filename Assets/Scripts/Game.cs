@@ -10,6 +10,7 @@ namespace SaltGlory {
     public GameObject sloopModel;
     public Material playerMat, ballMat, softMat, seaMat;
     public GameObject[] classModels = new GameObject[5]; public Material[] classMats = new Material[5];   // M3 ship art by class (null = the sloop stands in)
+    public Texture2D[] shipAlbedo = new Texture2D[30];   // [class * 6 + v], v: 0 base, 1-4 England / Spain / France / Dutch, 5 pirate (null = the material's own)
     public Mesh ballMesh, chainMesh; public Material chainMat;   // chain shot: Art Dev's SG_Shot_Chain sprite on a flat spinning quad
     public Camera cam; public Transform sea;
     public TextAsset landMask, portsJson;   // LandMask.bytes (built from the chart) and SG_Map_Ports.json
@@ -52,7 +53,13 @@ namespace SaltGlory {
     void ApplyClass(Ship s, int c){
       var m = c < classModels.Length ? classModels[c] : null;
       s.SetClass(c, m ? m : sloopModel, c < classMats.Length && classMats[c] ? classMats[c] : playerMat, !m);
-      if (s == player){ s.label = "Your " + s.C.name.ToLower(); s.SetTint(m ? Color.white : s.C.tint); }
+      if (s == player){ s.label = "Your " + s.C.name.ToLower(); SetLook(s, career.marque >= 0 ? career.marque + 1 : 0); }
+    }
+    /// <summary>Paint a ship in a nation's (or the pirates') colours: Art Dev's baked albedo variant; a tint if there is none.</summary>
+    void SetLook(Ship s, int v){
+      int i = s.cls * 6 + v; var tex = i < shipAlbedo.Length ? shipAlbedo[i] : null; bool real = classModels[s.cls];
+      if (tex) s.SetLook(tex, Color.white);
+      else s.SetLook(null, (v == 5 ? new Color(0.5f, 0.47f, 0.45f) : v > 0 && s != player ? Color.Lerp(Color.white, World.NationColor[v - 1], 0.4f) : Color.white) * (real ? Color.white : s.C.tint));
     }
     ParticleSystem MakePS(string n, float gravity){
       var go = new GameObject(n); var ps = go.AddComponent<ParticleSystem>(); ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -215,7 +222,7 @@ namespace SaltGlory {
     }
     void Aground(Ship s, Vector3 prev){
       if (s.gone || s.sinking) return;
-      float bow = 6f * s.transform.localScale.x; bool blocked = false;
+      float bow = s.halfL * 0.85f * s.transform.localScale.x; bool blocked = false;
       if (World.Land(s.Pos + s.Fwd * bow) > 0.42f || World.Land(s.Pos) > 0.42f){
         s.transform.position = prev; blocked = true; if (s.speed > 2f && s == player) Debug.Log("[SG] aground: turn away from the shore"); s.speed = Mathf.Min(s.speed, 0.6f);
       }
@@ -261,8 +268,7 @@ namespace SaltGlory {
       enemy.Reset(at, hdg, 0.75f); enemy.maxSpeed *= encWarship || encPirate ? 0.95f : 0.85f; enemy.reloadBase *= encWarship ? 1.35f : 1.6f;   // AI ships a little slower and slower to load
       string cn = enemy.C.name.ToLower();
       enemy.label = encPirate ? $"Pirate {cn}" : encTreasure ? "Spanish treasure galleon" : $"{World.Adj[(int)encNation]} {(encWarship ? "warship" : "merchant")} {cn}";
-      var placeholder = classModels[enemy.cls] == null;
-      enemy.SetTint((encPirate ? new Color(0.5f, 0.47f, 0.45f) : Color.Lerp(Color.white, World.NationColor[(int)encNation], 0.4f)) * (placeholder ? enemy.C.tint : Color.white));
+      SetLook(enemy, encPirate ? 5 : (int)encNation + 1);
       encActive = true; encHostile = false; encLegal = true; encFlee = !encWarship && !encPirate;
       encCourse = hdg;
       bool war = career.marque >= 0 && World.AtWar((Nation)career.marque, encNation);
@@ -328,7 +334,7 @@ namespace SaltGlory {
     void Separate(){
       if (enemy.gone) return;
       Vector3 d = enemy.Pos - player.Pos; d.y = 0f; float m = d.magnitude;
-      float sep = 5.5f * (player.transform.localScale.x + enemy.transform.localScale.x);
+      float sep = 1.9f * (player.halfW * player.transform.localScale.x + enemy.halfW * enemy.transform.localScale.x);
       if (m < sep && m > 0.01f){ var push = d / m * (sep - m) * 0.5f; enemy.transform.position += push; player.transform.position -= push; player.speed *= 0.97f; enemy.speed *= 0.97f; }
     }
 
@@ -375,7 +381,7 @@ namespace SaltGlory {
         var target = b.from == player ? enemy : player; var p = b.t.position;
         if (!target.sinking && !target.gone){
           var l = target.transform.InverseTransformPoint(p);
-          if (Mathf.Abs(l.x) < 2.9f && Mathf.Abs(l.z) < 7.2f && l.y < 4.5f && l.y > -1.5f){ Hit(target, b.type, p); Recycle(b); balls.RemoveAt(i); continue; }
+          if (Mathf.Abs(l.x) < target.halfW && Mathf.Abs(l.z) < target.halfL && l.y < 4.5f && l.y > -1.5f){ Hit(target, b.type, p); Recycle(b); balls.RemoveAt(i); continue; }
         }
         if (p.y < 0f || b.life <= 0f){
           if (p.y < 0.5f){
@@ -452,10 +458,10 @@ namespace SaltGlory {
     // ---------- camera ----------
     void LateUpdate(){
       if (!player) return;
-      Vector3 focus = player.Pos; float dist = 46f;
+      Vector3 focus = player.Pos; float dist = Mathf.Max(46f, player.halfL * 5.5f);
       if (!enemy.gone){
         float sep = Vector3.Distance(player.Pos, enemy.Pos);
-        if (sep < 80f){ focus = Vector3.Lerp(player.Pos, enemy.Pos, 0.5f); dist = Mathf.Clamp(sep * 1.45f + 18f, 46f, 125f); }   // frame both ships in a fight
+        if (sep < 80f + enemy.halfL){ focus = Vector3.Lerp(player.Pos, enemy.Pos, 0.5f); dist = Mathf.Clamp(sep * 1.45f + 18f + enemy.halfL, dist, 140f); }   // frame both ships in a fight
       }
       float k = 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2.5f);
       camFocus = Vector3.Lerp(camFocus, focus + player.Fwd * player.speed * 0.6f, k); camDist = Mathf.Lerp(camDist, dist, k * 0.5f);
@@ -510,7 +516,7 @@ namespace SaltGlory {
       }
       if (state == State.Duel){ DuelGUI(s, W, H); return; }
       if (encActive && !enemy.gone){
-        var sp = cam.WorldToScreenPoint(enemy.Pos + Vector3.up * 14f * enemy.transform.localScale.x);
+        var sp = cam.WorldToScreenPoint(enemy.Pos + Vector3.up * enemy.height * enemy.transform.localScale.x);
         if (sp.z > 0) Label(new Rect(sp.x - 150 * s, H - sp.y - 24 * s, 300 * s, 24 * s), enemy.label, new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }, encHostile ? new Color(1f, 0.6f, 0.5f) : Parchment);
       }
       // wind compass (top-left): arrow points where the wind blows
