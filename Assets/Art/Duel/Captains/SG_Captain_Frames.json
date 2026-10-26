@@ -1,0 +1,102 @@
+{
+ "cell": [
+  384,
+  256
+ ],
+ "pivot": "bottom-centre (0.5, 0): feet touch the bottom edge at x = 192",
+ "pixels_per_unit": 100,
+ "pixels_per_metre_in_render": 100,
+ "facing": "+X (right); flip X for the opponent",
+ "layout": "one row per animation, top row first, frames left to right; unused cells are empty",
+ "sheet_size": [
+  2688,
+  2304
+ ],
+ "animations": [
+  {
+   "name": "idle",
+   "row": 0,
+   "frames": 6,
+   "sprite_names": "<sheet>_idle_0..5"
+  },
+  {
+   "name": "step",
+   "row": 1,
+   "frames": 6,
+   "sprite_names": "<sheet>_step_0..5"
+  },
+  {
+   "name": "high",
+   "row": 2,
+   "frames": 6,
+   "sprite_names": "<sheet>_high_0..5"
+  },
+  {
+   "name": "mid",
+   "row": 3,
+   "frames": 6,
+   "sprite_names": "<sheet>_mid_0..5"
+  },
+  {
+   "name": "low",
+   "row": 4,
+   "frames": 6,
+   "sprite_names": "<sheet>_low_0..5"
+  },
+  {
+   "name": "block",
+   "row": 5,
+   "frames": 3,
+   "sprite_names": "<sheet>_block_0..2"
+  },
+  {
+   "name": "parry",
+   "row": 6,
+   "frames": 5,
+   "sprite_names": "<sheet>_parry_0..4"
+  },
+  {
+   "name": "hit",
+   "row": 7,
+   "frames": 4,
+   "sprite_names": "<sheet>_hit_0..3"
+  },
+  {
+   "name": "fall",
+   "row": 8,
+   "frames": 7,
+   "sprite_names": "<sheet>_fall_0..6"
+  }
+ ],
+ "suggested_fps": {
+  "idle": 8,
+  "step": 12,
+  "high": 14,
+  "mid": 14,
+  "low": 14,
+  "block": 12,
+  "parry": 14,
+  "hit": 12,
+  "fall": 10
+ },
+ "sheets": {
+  "Player": [
+   "SG_Captain_Player_Base.png",
+   "SG_Captain_Player_Mask.png",
+   "SG_Captain_Player_England.png",
+   "SG_Captain_Player_Spain.png",
+   "SG_Captain_Player_France.png",
+   "SG_Captain_Player_Dutch.png",
+   "SG_Captain_Player_Pirate.png"
+  ],
+  "Enemy": [
+   "SG_Captain_Enemy_Base.png",
+   "SG_Captain_Enemy_Mask.png",
+   "SG_Captain_Enemy_England.png",
+   "SG_Captain_Enemy_Spain.png",
+   "SG_Captain_Enemy_France.png",
+   "SG_Captain_Enemy_Dutch.png",
+   "SG_Captain_Enemy_Pirate.png"
+  ]
+ }
+}
