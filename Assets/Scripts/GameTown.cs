@@ -50,17 +50,28 @@ namespace SaltGlory {
       Debug.Log($"[SG] set sail from {p.name}");
     }
     void WashAshore(){
+      // launch fix: the nearest port that is friendly to you (your patron's, or Friendly standing and not at war with your
+      // patron), else the nearest neutral one; never a hostile nation's or an enemy of your patron's unless nothing else exists
       int best = -1; float bd = 1e9f;
-      for (int i = 0; i < World.Ports.Count; i++){ var q = World.Ports[i]; float d = Vector3.Distance(player.Pos, q.pos) + (career.IsHostile(q.nation) ? 1e6f : 0f); if (d < bd){ bd = d; best = i; } }
+      for (int i = 0; i < World.Ports.Count; i++){ var q = World.Ports[i]; float d = Vector3.Distance(player.Pos, q.pos) + AshoreTier(q.nation) * 1e6f; if (d < bd){ bd = d; best = i; } }
       career.gold = Mathf.RoundToInt(career.gold * 0.7f); for (int i = 0; i < 5; i++) career.cargo[i] = 0;
       player.Reset(World.Ports[best].pos, 0f, 0.6f); player.hull = 50f; player.sails = 50f; player.crew = Mathf.Min(player.crew + 20f, 40f);
-      Debug.Log("[SG] washed ashore");
-      EnterTown(best, "Your sloop was lost. A fishing boat brought you and what crew survived ashore, and the shipwright raised a patched hull for you. The cargo is gone.");
+      Debug.Log($"[SG] washed ashore at {World.Ports[best].name} ({World.Adj[(int)World.Ports[best].nation]}) tier={AshoreTier(World.Ports[best].nation)} marque={career.marque}");
+      EnterTown(best, $"Your {player.C.name.ToLower()} was lost. A fishing boat brought you and what crew survived ashore, and the shipwright raised a patched hull for you. The cargo is gone.");
+    }
+
+    /// <summary>0 friendly (patron, or Friendly and not at war with the patron), 1 neutral, 2 wary, 3 enemy (hostile, or at war with the patron).</summary>
+    int AshoreTier(Nation n){
+      bool enemyOfPatron = career.marque >= 0 && World.AtWar((Nation)career.marque, n);
+      if (career.IsHostile(n) || enemyOfPatron) return 3;
+      if (career.marque == (int)n || career.rep[(int)n] >= 30) return 0;
+      return career.rep[(int)n] >= 0 ? 1 : 2;
     }
 
     // ---------- careers and saves ----------
+    readonly List<int> careerSlots = new();   // launch fix: slots this career was loaded from or saved to (locked when the captain retires)
     void NewCareer(){
-      career = new Career(); career.FixUp(World.Ports.Count); ApplyClass(player, 0); player.Reset(World.Ports[0].pos, 150f, 0.6f); player.crew = career.crew;
+      career = new Career(); career.id = System.DateTime.Now.Ticks ^ Random.Range(1, int.MaxValue); careerSlots.Clear(); career.FixUp(World.Ports.Count); ApplyClass(player, 0); player.Reset(World.Ports[0].pos, 150f, 0.6f); player.crew = career.crew;
       Debug.Log("[SG] new career");
       EnterTown(0, "1660. You are a young captain with a small sloop, 600 gold and a crew of 70. Port Royal is yours to start from.");
     }
@@ -69,12 +80,13 @@ namespace SaltGlory {
       career.hull = player.hull; career.sails = player.sails; career.crew = player.crew; career.where = Here.name;
     }
     void SaveTo(int slot){
-      SyncCareer(); Saves.Save(slot, career); townMsg = $"Saved to slot {slot + 1}.";
+      if (career.id == 0) career.id = System.DateTime.Now.Ticks ^ Random.Range(1, int.MaxValue);   // older saves get an id on their next save
+      SyncCareer(); Saves.Save(slot, career); if (!careerSlots.Contains(slot)) careerSlots.Add(slot); townMsg = $"Saved to slot {slot + 1}.";
       Debug.Log($"[SG] saved slot {slot + 1} port={Here.name} gold={career.gold} hold={career.Hold} rep={string.Join(",", career.rep)}");
     }
     void LoadFrom(int slot){
-      var c = Saves.Load(slot); if (c == null) return;
-      career = c; ApplyClass(player, c.shipClass); player.Reset(new Vector3(c.x, 0f, c.z), c.heading, 0.6f); player.hull = c.hull; player.sails = c.sails; player.crew = Mathf.Min(c.crew, player.Complement);
+      var c = Saves.Load(slot); if (c == null || c.retired) return;
+      career = c; careerSlots.Clear(); careerSlots.Add(slot); ApplyClass(player, c.shipClass); player.Reset(new Vector3(c.x, 0f, c.z), c.heading, 0.6f); player.hull = c.hull; player.sails = c.sails; player.crew = Mathf.Min(c.crew, player.Complement);
       Debug.Log($"[SG] loaded slot {slot + 1} port={c.where} gold={c.gold} hold={c.Hold} rep={string.Join(",", c.rep)} marque={c.marque} ship={player.C.name} fame={c.fame} pieces={c.mapPieces}");
       int idx = Mathf.Clamp(c.lastPort, 0, World.Ports.Count - 1);
       EnterTown(idx, $"Game loaded (slot {slot + 1}, saved {c.savedAt}).");
@@ -191,11 +203,12 @@ namespace SaltGlory {
       btnSt.normal.background = null; btnHiSt.normal.background = null;   // the face is drawn by Slice9 (or the fallback box)
       btnSt.normal.textColor = btnHiSt.normal.textColor = Ink; btnSt.fontSize = btnHiSt.fontSize = Mathf.RoundToInt(17 * s);
       inkSt ??= new GUIStyle(GUI.skin.label){ wordWrap = true }; inkBig ??= new GUIStyle(GUI.skin.label){ fontStyle = FontStyle.Bold, wordWrap = true }; inkSmall ??= new GUIStyle(GUI.skin.label){ wordWrap = true };
+      inkSt.clipping = inkBig.clipping = inkSmall.clipping = TextClipping.Overflow;   // launch fix: small (mobile) sizes cut descenders
       inkSt.fontSize = Mathf.RoundToInt(17 * s); inkBig.fontSize = Mathf.RoundToInt(26 * s); inkSmall.fontSize = Mathf.RoundToInt(14 * s);
       inkSt.normal.textColor = inkBig.normal.textColor = inkSmall.normal.textColor = Ink;
       SkinStyles();
     }
-    void PanelBox(Rect r){ if (panelTex) GUI.Box(r, GUIContent.none, panelSt); else Box(r, new Color(0.93f, 0.86f, 0.68f, 0.95f)); }
+    void PanelBox(Rect r){ if (panelTex) Slice9(r, panelSt, Mathf.Max(0.3f, bgK)); else Box(r, new Color(0.93f, 0.86f, 0.68f, 0.95f)); }
     /// <summary>Menu button: drawn on Repaint, fires once for a click / tap that began inside it this frame, or for Enter / A
     /// while it has the keyboard / gamepad focus (gold frame).</summary>
     bool Btn(Rect r, string label, bool enabled = true){
@@ -265,11 +278,11 @@ namespace SaltGlory {
         if (Btn(R(490, 430, 300, 64), "Load")){ titleLoad = true; focus = -1; Debug.Log("[SG] title load menu"); }
         Label(R(430, 510, 420, 110), "Sail: A/D steer, W/S sails, Q/E broadsides, Tab shot, Enter dock or board, M map, Esc or Start pause.\nMenus: arrows / WASD / D-pad, Enter or A, Esc or B. Mouse and touch work too.", new GUIStyle(inkSmall){ alignment = TextAnchor.UpperCenter }, Ink);
       } else {
-        for (int i = 0; i < Saves.Slots; i++){ var c = Saves.Load(i); if (Btn(R(450, 270 + i * 80, 380, 66), SlotLabel(i, c), c != null)) LoadFrom(i); }
+        for (int i = 0; i < Saves.Slots; i++){ var c = Saves.Load(i); if (Btn(R(450, 270 + i * 80, 380, 66), SlotLabel(i, c), c != null && !c.retired)) LoadFrom(i); }
         if (Btn(R(540, 520, 200, 56), "Back")){ titleLoad = false; focus = -1; }
       }
     }
-    static string SlotLabel(int i, Career c) => c == null ? $"Slot {i + 1}: empty" : $"Slot {i + 1}: {c.where}, {c.gold} gold\n{c.savedAt}";
+    static string SlotLabel(int i, Career c) => c == null ? $"Slot {i + 1}: empty" : c.retired ? $"Slot {i + 1}: retired captain\nfinal fame {c.fame} (closed)" : $"Slot {i + 1}: {c.where}, {c.gold} gold\n{c.savedAt}";
 
     void TownGUI(float W, float H, float uk, float k0, Vector2 o0){
       var p = Here; int n = (int)p.nation;
@@ -279,16 +292,17 @@ namespace SaltGlory {
       if (screen == Page.Hub || screen == Page.Save) Flag(n, flagAnchors[n]); else if (screen == Page.Governor) Flag(n, flagAnchors[4]);   // flags placed with the cover fit of the background
       UseUiFit(W, H, uk);
       // status (top-left) and reputation (top-right)
-      PanelBox(R(16, 16, 360, 232));
-      Icon(flagIconTex[n], R(40, 38, 54, 54));
-      Label(R(100, 36, 260, 32), p.name, inkBig, Ink); Label(R(100, 68, 260, 24), $"{World.NationNames[n]} · {Career.Standing(career.rep[n])}", inkSmall, Ink);
-      Icon(coinTex, R(40, 100, 30, 30)); Label(R(76, 102, 280, 26), $"{career.gold} gold    Hold {career.Hold}/{career.HoldMax}", inkSt, Ink);
-      Label(R(44, 132, 316, 22), $"{player.C.name}: hull {player.hull:F0}  sails {player.sails:F0}  crew {player.crew:F0}/{player.Complement}", inkSmall, Ink);
-      Label(R(44, 154, 316, 22), $"Victories {career.victories}   Fame {career.fame}   Map {career.mapPieces}/4", inkSmall, Ink);   // clear of the panel corner (M2 QA)
-      PanelBox(R(924, 16, 340, 200));
+      // launch fix: everything sits inside the panel art's 40 px content padding (the wood frame is ~34 px at 1x)
+      PanelBox(R(8, 8, 420, 236));
+      Icon(flagIconTex[n], R(50, 48, 50, 50));
+      Label(R(108, 46, 276, 32), p.name, inkBig, Ink); Label(R(108, 78, 276, 24), $"{World.NationNames[n]} · {Career.Standing(career.rep[n])}", inkSmall, Ink);
+      Icon(coinTex, R(50, 108, 28, 28)); Label(R(84, 109, 300, 26), $"{career.gold} gold    Hold {career.Hold}/{career.HoldMax}", inkSt, Ink);
+      Label(R(50, 140, 336, 22), $"{player.C.name}: hull {player.hull:F0}  sails {player.sails:F0}  crew {player.crew:F0}/{player.Complement}", inkSmall, Ink);
+      Label(R(50, 164, 336, 22), $"Victories {career.victories}   Fame {career.fame}   Map {career.mapPieces}/4", inkSmall, Ink);
+      PanelBox(R(860, 8, 412, 236));
       for (int i = 0; i < 4; i++){
-        Icon(flagIconTex[i], R(946, 34 + i * 36, 32, 32));
-        Label(R(984, 38 + i * 36, 260, 26), $"{World.Adj[i]}: {Career.Standing(career.rep[i])} ({career.rep[i]}){(career.marque == i ? "  · marque" : "")}", career.IsHostile((Nation)i) ? new GUIStyle(inkSmall){ normal = { textColor = new Color(0.6f, 0.1f, 0.08f) } } : inkSmall, Ink);
+        Icon(flagIconTex[i], R(902, 46 + i * 36, 32, 32));
+        Label(R(940, 50 + i * 36, 292, 26), $"{World.Adj[i]}: {Career.Standing(career.rep[i])} ({career.rep[i]}){(career.marque == i ? "  · marque" : "")}", career.IsHostile((Nation)i) ? new GUIStyle(inkSmall){ normal = { textColor = new Color(0.6f, 0.1f, 0.08f) } } : inkSmall, Ink);
       }
       switch (screen){
         case Page.Hub: HubGUI(); break;
@@ -303,18 +317,18 @@ namespace SaltGlory {
     }
     void Msg(Rect r){ if (!string.IsNullOrEmpty(townMsg)) Label(r, townMsg, inkSt, Ink); }
     void HubGUI(){
-      PanelBox(R(40, 548, 1200, 160));
-      Msg(R(86, 568, 1110, 50));
+      PanelBox(R(24, 532, 1232, 184));
+      Msg(R(72, 574, 1136, 40));
       string[] names = { "Tavern", "Governor", "Merchant", "Shipwright", "Captain's log", "Save game", "Set sail" };
       for (int i = 0; i < 7; i++){
-        if (!Btn(R(66 + i * 164, 622, 156, 60), names[i])) continue;
+        if (!Btn(R(70 + i * 164, 616, 156, 56), names[i])) continue;
         if (i < 4) Go((Page)(i + 1)); else if (i == 4) Go(Page.Log); else if (i == 5) Go(Page.Save); else SetSail();
       }
     }
     void Sheet(out Rect r){ r = R(150, 232, 980, 400); PanelBox(r); }
     void TavernGUI(){
       Sheet(out _);
-      Label(R(200, 270, 880, 40), $"The tavern at {Here.name}", inkBig, Ink);
+      Label(R(200, 280, 880, 40), $"The tavern at {Here.name}", inkBig, Ink);
       if (rumours.Count > 0) Label(R(200, 318, 880, 70), rumours[rumourAt % rumours.Count], inkSt, Ink);
       if (Btn(R(200, 400, 280, 56), "Listen for more")){ rumourAt++; Debug.Log("[SG] tavern rumour " + rumours[rumourAt % rumours.Count]); }
       if (Btn(R(500, 400, 360, 56), $"Recruit 10 hands (60 gold)", player.crew < player.Complement)) Recruit();
@@ -323,27 +337,27 @@ namespace SaltGlory {
         career.gold -= piece; GameAudio.I?.Play("coins"); GainPiece("tavern"); townMsg = career.digActive ? $"The fourth piece! X marks a beach near {career.digNear}." : $"You buy a piece of the chart ({career.mapPieces} of 4).";
       }
       Label(R(200, 470, 880, 30), $"Crew {player.crew:F0}/{player.Complement}. More hands reload the guns faster and win boarding fights.   Map pieces {career.mapPieces}/4", inkSmall, Ink);
-      Msg(R(200, 510, 880, 80));
+      Msg(R(200, 506, 880, 76));
     }
     int PiecePrice => 180 + 40 * career.mapPieces;   // M4 balance: 180 + 220 + 260 + 300 = 960 for a whole map (a dig pays 800-1200)
     void GovernorGUI(){
       var n = Here.nation; int ni = (int)n; var tgt = MissionTarget(n);
       Sheet(out _);
-      Label(R(200, 262, 880, 40), $"The governor of {Here.name}", inkBig, Ink);
+      Label(R(200, 280, 880, 40), $"The governor of {Here.name}", inkBig, Ink);
       // letter of marque
       string enemies = ""; for (int i = 0; i < 4; i++) if (World.AtWar(n, (Nation)i)) enemies += (enemies.Length > 0 ? " and " : "") + World.Adj[i];
-      if (career.marque == ni) Label(R(200, 306, 880, 50), $"You sail under our letter of marque. Attacking {enemies} ships is lawful, and earns our thanks.", inkSt, Ink);
-      else if (career.rep[ni] < 0) Label(R(200, 306, 880, 50), "\"Prove yourself a friend of the crown first.\" (Standing must be at least Neutral.)", inkSt, Ink);
+      if (career.marque == ni) Label(R(200, 322, 880, 40), $"You sail under our letter of marque. Attacking {enemies} ships is lawful, and earns our thanks.", inkSt, Ink);
+      else if (career.rep[ni] < 0) Label(R(200, 322, 880, 40), "\"Prove yourself a friend of the crown first.\" (Standing must be at least Neutral.)", inkSt, Ink);
       else {
-        Label(R(200, 306, 880, 50), $"A letter of marque against the {enemies}" + (career.marque >= 0 ? $" (replaces your {World.Adj[career.marque]} letter)" : ""), inkSt, Ink);
-        if (Btn(R(200, 350, 360, 52), "Accept the letter of marque")){
+        Label(R(200, 322, 880, 40), $"A letter of marque against the {enemies}" + (career.marque >= 0 ? $" (replaces your {World.Adj[career.marque]} letter)" : ""), inkSt, Ink);
+        if (Btn(R(200, 362, 360, 52), "Accept the letter of marque")){
           career.marque = ni; career.AddRep(n, 5); SetLook(player, ni + 1); townMsg = $"You now sail as a {World.Adj[ni]} privateer.";
           Debug.Log($"[SG] marque {World.Adj[ni]} rep={string.Join(",", career.rep)}");
         }
       }
       // mission
       int rk = career.marque == ni ? career.Rank(ni) : -1;
-      if (rk >= 0) Label(R(620, 266, 460, 30), $"Your rank: {Career.Ranks[rk]} ({career.service[ni]} service)", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleRight }, Ink);
+      if (rk >= 0) Label(R(620, 284, 460, 30), $"Your rank: {Career.Ranks[rk]} ({career.service[ni]} service)", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleRight }, Ink);
       if (career.missionFrom == -1){
         int reward = Mathf.RoundToInt((350 + 50 * (portIdx % 4)) * (1f + 0.25f * Mathf.Max(0, rk)));   // rank pays: +25% per rank under this crown
         Label(R(200, 420, 880, 30), $"Mission: sink a {World.Adj[(int)tgt]} ship. Reward {reward} gold.", inkSt, Ink);
@@ -361,29 +375,29 @@ namespace SaltGlory {
         }
       } else if (career.missionFrom == ni) Label(R(200, 420, 880, 60), $"Your task: sink a {World.Adj[career.missionTarget]} ship, then come back to any {World.Adj[ni]} governor." + (career.marque == ni ? "" : " (A letter of marque makes it lawful.)"), inkSt, Ink);
       else Label(R(200, 420, 880, 60), $"You are on {World.Adj[career.missionFrom]} business (sink a {World.Adj[career.missionTarget]} ship).", inkSt, Ink);
-      Msg(R(200, 540, 880, 60));
+      Msg(R(200, 532, 880, 54));
     }
     void MerchantGUI(){
       Sheet(out _);
-      Label(R(206, 268, 560, 36), $"Merchant of {Here.name}", inkBig, Ink);   // inside the frame (M2 QA)
-      Label(R(740, 272, 340, 30), $"{career.gold} gold   Hold {career.Hold}/{career.HoldMax}", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleRight }, Ink);
+      Label(R(200, 280, 540, 36), $"Merchant of {Here.name}", inkBig, Ink);   // inside the frame (M2 QA)
+      Label(R(740, 284, 340, 30), $"{career.gold} gold   Hold {career.Hold}/{career.HoldMax}", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleRight }, Ink);
       for (int g = 0; g < 5; g++){
-        float y = 312 + g * 48;
-        Icon(cargoTex[g], R(190, y, 46, 46));
-        Label(R(246, y + 10, 150, 30), World.Goods[g], inkSt, Ink);
+        float y = 322 + g * 48;
+        Icon(cargoTex[g], R(196, y, 46, 46));
+        Label(R(250, y + 10, 140, 30), World.Goods[g], inkSt, Ink);
         Label(R(390, y + 10, 220, 30), $"Buy {Buy(g)}  ·  Sell {Sell(g)}", inkSt, Ink);
-        Label(R(610, y + 10, 100, 30), $"Hold {career.cargo[g]}", inkSt, Ink);
-        if (Btn(R(712, y + 2, 92, 44), "Buy 1")) Trade(g, 1);
-        if (Btn(R(810, y + 2, 92, 44), "Buy 5")) Trade(g, 5);
-        if (Btn(R(908, y + 2, 92, 44), "Sell 1", career.cargo[g] > 0)) Trade(g, -1);
-        if (Btn(R(1006, y + 2, 100, 44), "Sell all", career.cargo[g] > 0)) Trade(g, -career.cargo[g]);
+        Label(R(600, y + 10, 90, 30), $"Hold {career.cargo[g]}", inkSt, Ink);
+        if (Btn(R(690, y + 2, 86, 44), "Buy 1")) Trade(g, 1);
+        if (Btn(R(782, y + 2, 86, 44), "Buy 5")) Trade(g, 5);
+        if (Btn(R(874, y + 2, 86, 44), "Sell 1", career.cargo[g] > 0)) Trade(g, -1);
+        if (Btn(R(966, y + 2, 112, 44), "Sell all", career.cargo[g] > 0)) Trade(g, -career.cargo[g]);
       }
-      Msg(R(206, 556, 860, 40));
+      Msg(R(200, 560, 880, 28));
     }
     void ShipwrightGUI(){
       Sheet(out _);
-      Label(R(200, 270, 880, 40), $"Shipwright of {Here.name}", inkBig, Ink);
-      Label(R(200, 320, 880, 30), $"Hull {player.hull:F0}/100 (3 gold a point)    Sails {player.sails:F0}/100 (2 gold a point)    Gold {career.gold}", inkSt, Ink);
+      Label(R(200, 280, 880, 40), $"Shipwright of {Here.name}", inkBig, Ink);
+      Label(R(200, 324, 880, 30), $"Hull {player.hull:F0}/100 (3 gold a point)    Sails {player.sails:F0}/100 (2 gold a point)    Gold {career.gold}", inkSt, Ink);
       int hc = Mathf.CeilToInt(100f - player.hull) * 3, sc = Mathf.CeilToInt(100f - player.sails) * 2;
       if (Btn(R(200, 370, 330, 56), hc > 0 ? $"Repair hull ({hc} gold)" : "Hull is sound", hc > 0)) Repair(true);
       if (Btn(R(550, 370, 330, 56), sc > 0 ? $"Repair sails ({sc} gold)" : "Sails are sound", sc > 0)) Repair(false);
@@ -394,7 +408,7 @@ namespace SaltGlory {
         if (Btn(R(200 + c * 178, 460, 170, 74), c == player.cls ? $"{k.name}\n(yours)" : cost >= 0 ? $"{k.name}\n{cost} gold" : $"{k.name}\n+{-cost} gold", can)) Refit(c, cost);
         Label(R(200 + c * 178, 536, 170, 22), $"{k.speed:F0} kn · x{k.gunK:F1} · {k.hold} · {k.complement}", new GUIStyle(inkSmall){ alignment = TextAnchor.UpperCenter, fontSize = Mathf.RoundToInt(12 * bgK) }, Ink);
       }
-      Msg(R(200, 560, 880, 40));
+      Msg(R(200, 560, 880, 28));
     }
     /// <summary>M4 balance: a consistent share of the ship's present value (list price, less up to half for hull damage): 75%, or 45%
     /// for a captured prize (no papers, and she needs a refit).</summary>
@@ -454,11 +468,14 @@ namespace SaltGlory {
       }
     }
     // ---------- M4: retiring ends the career with a final fame score ----------
-    bool retireAsk;
+    bool retireAsk; string retiredSlots = "";
     void Retire(){
       ClearFx(); encActive = false; enemy.Hide(); paused = mapOpen = logOpen = boardAsk = retireAsk = false; Time.timeScale = 1f; ptrs.Clear(); digT = -1f;
       state = State.Retired; focus = -1; GameAudio.I?.SetBattle(false); GameAudio.I?.SetScene(false, false); GameAudio.I?.Play("cheer");
-      Debug.Log($"[SG] retired final fame={career.fame} title={Career.FameTitle(career.fame)} victories={career.victories} captures={career.captures} treasures={career.treasures} gold={career.gold}");
+      // launch fix: the career is over, so its save slot is locked (shown as retired, can't be loaded or continued; saving a
+      // new career over it is still allowed). Every slot holding this career is locked: the one it was loaded from and any it was saved to.
+      retiredSlots = Saves.Lock(career.id, careerSlots); careerSlots.Clear();
+      Debug.Log($"[SG] retired locked slots={retiredSlots} final fame={career.fame} title={Career.FameTitle(career.fame)} victories={career.victories} captures={career.captures} treasures={career.treasures} gold={career.gold}");
     }
     void RetiredGUI(float W, float H, float uk){
       Background(logTex ? logTex : titleTex, W, H); Box(new Rect(0, 0, W, H), new Color(0.05f, 0.04f, 0.03f, 0.45f));
@@ -470,14 +487,15 @@ namespace SaltGlory {
       Label(R(380, 236, 520, 80), career.fame.ToString(), new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(64 * uk) }, new Color(0.5f, 0.3f, 0.05f));
       Label(R(380, 318, 520, 30), $"{Career.FameTitle(career.fame)}" + (best >= 0 ? $"  ·  {Career.Ranks[best]} of {World.NationNames[bn]}" : ""), new GUIStyle(inkSt){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }, Ink);
       Label(R(420, 366, 440, 170), $"Victories at sea  {career.victories}\nShips captured  {career.captures}\nDuels won  {career.duelsWon}\nTreasures found  {career.treasures}\nMissions done  {career.missionsDone}", new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
+      if (retiredSlots.Length > 0) Label(R(380, 524, 520, 26), (retiredSlots.Contains(" and ") ? $"Save slots {retiredSlots} are closed" : $"Save slot {retiredSlots} is closed") + ": this captain's story is told.", new GUIStyle(inkSmall){ alignment = TextAnchor.MiddleCenter }, Ink);
       if (Btn(R(490, 560, 300, 60), "Back to the title")){ Debug.Log("[SG] retired -> title"); TownStart(); }
     }
     void SaveGUI(){
       Sheet(out _);
-      Label(R(200, 262, 880, 40), "Save your career", inkBig, Ink);
-      for (int i = 0; i < Saves.Slots; i++) if (Btn(R(200, 316 + i * 76, 560, 64), SlotLabel(i, Saves.Load(i)))) SaveTo(i);
-      Label(R(780, 330, 320, 120), "Saves stay in this browser (localStorage). Continue on the title screen loads the newest one.", inkSmall, Ink);
-      Msg(R(780, 460, 320, 80));
+      Label(R(200, 280, 880, 40), "Save your career", inkBig, Ink);
+      for (int i = 0; i < Saves.Slots; i++) if (Btn(R(200, 326 + i * 76, 540, 62), SlotLabel(i, Saves.Load(i)))) SaveTo(i);
+      Label(R(770, 330, 310, 120), "Saves stay in this browser (localStorage). Continue on the title screen loads the newest one.", inkSmall, Ink);
+      Msg(R(770, 460, 310, 80));
     }
 
     /// <summary>The world map overlay (sea only): the chart, port markers ringed in nation colours, your ship and the met ship.</summary>
@@ -488,14 +506,22 @@ namespace SaltGlory {
       var mr = new Rect((W - mw) / 2f, (H - mh) / 2f + 14 * s, mw, mh); GUI.DrawTexture(mr, tex, ScaleMode.StretchToFill);
       Vector2 ToScr(Vector3 p){ var uv = World.ToUV(p); return new Vector2(mr.x + uv.x * mr.width, mr.y + (1f - uv.y) * mr.height); }
       float ms = Mathf.Max(22f, mr.width / 60f); var o = GUI.color;
+      // launch fix: labels go below their marker unless that hits another label or marker (Sint Eustatius / St. Kitts), then
+      // above, right or left; every marker is reserved first
+      var taken = new List<Rect>(); foreach (var q in World.Ports){ var qc = ToScr(q.pos); taken.Add(new Rect(qc.x - ms * 0.7f, qc.y - ms * 0.7f, ms * 1.4f, ms * 1.4f)); }
       foreach (var p in World.Ports){
         var c = ToScr(p.pos);
         GUI.color = World.NationColor[(int)p.nation]; if (portRingTex) GUI.DrawTexture(new Rect(c.x - ms * 0.7f, c.y - ms * 0.7f, ms * 1.4f, ms * 1.4f), portRingTex); else Box(new Rect(c.x - ms * 0.5f, c.y - ms * 0.5f, ms, ms), GUI.color);
         GUI.color = o; if (portMarkerTex) GUI.DrawTexture(new Rect(c.x - ms * 0.5f, c.y - ms * 0.5f, ms, ms), portMarkerTex);
         bool hostile = career.IsHostile(p.nation);
-        var st = new GUIStyle(txt){ alignment = TextAnchor.UpperCenter, fontSize = Mathf.RoundToInt(15 * s) };
-        Label(new Rect(c.x - 110 * s + 1, c.y + ms * 0.7f + 1, 220 * s, 22 * s), p.name + (hostile ? " (hostile)" : ""), st, new Color(1f, 0.95f, 0.85f, 0.8f));
-        Label(new Rect(c.x - 110 * s, c.y + ms * 0.7f, 220 * s, 22 * s), p.name + (hostile ? " (hostile)" : ""), st, hostile ? new Color(0.6f, 0.08f, 0.06f) : Ink);
+        var st = new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, wordWrap = false, fontSize = Mathf.RoundToInt(15 * s) };
+        string name = p.name + (hostile ? " (hostile)" : ""); var sz = st.CalcSize(new GUIContent(name)); float lw = sz.x + 4f, lh = Mathf.Max(sz.y, 18f * s);
+        Rect[] cand = { new(c.x - lw / 2f, c.y + ms * 0.7f, lw, lh), new(c.x - lw / 2f, c.y - ms * 0.7f - lh, lw, lh), new(c.x + ms * 0.75f, c.y - lh / 2f, lw, lh), new(c.x - ms * 0.75f - lw, c.y - lh / 2f, lw, lh) };
+        Rect lr = cand[0]; var mine = new Rect(c.x - ms * 0.7f, c.y - ms * 0.7f, ms * 1.4f, ms * 1.4f);
+        foreach (var cr in cand){ bool hit = false; foreach (var t in taken) if (t != mine && t.Overlaps(cr)){ hit = true; break; } if (!hit){ lr = cr; break; } }
+        taken.Add(lr);
+        Label(new Rect(lr.x + 1, lr.y + 1, lr.width, lr.height), name, st, new Color(1f, 0.95f, 0.85f, 0.8f));
+        Label(lr, name, st, hostile ? new Color(0.6f, 0.08f, 0.06f) : Ink);
       }
       if (career.digActive){ var x = ToScr(new Vector3(career.digX, 0f, career.digZ)); if (digMarkTex) GUI.DrawTexture(new Rect(x.x - ms * 0.6f, x.y - ms * 0.6f, ms * 1.2f, ms * 1.2f), digMarkTex); else Label(new Rect(x.x - 20 * s, x.y - 18 * s, 40 * s, 36 * s), "X", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(28 * s) }, new Color(0.7f, 0.08f, 0.05f)); }
       if (encActive && !enemy.gone){ var e = ToScr(enemy.Pos); Box(new Rect(e.x - 5 * s, e.y - 5 * s, 10 * s, 10 * s), encHostile ? new Color(0.8f, 0.15f, 0.1f) : Ink); }

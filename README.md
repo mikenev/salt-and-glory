@@ -18,7 +18,7 @@ A captain's career in the Caribbean, 1660: trade between ports, fight broadside 
   - Hold block to guard. A block timed just before the hit is a parry, and it leaves the attacker open.
   - Push the enemy captain over the rail to win the ship and her cargo, then keep your ship or take hers.
 - **Treasure:** four map pieces (from taverns or from prizes) mark a dig spot. The torn chart in the Captain's log shows where it is. Sail there and dig.
-- **Fame and rank:** fame and your rank under each letter of marque (Ensign to Admiral) are kept in the Captain's log. **Retire** from the log to end the career and see your final fame score.
+- **Fame and rank:** fame and your rank under each letter of marque (Ensign to Admiral) are kept in the Captain's log. **Retire** from the log to end the career and see your final fame score; its save slot is then closed (it can be saved over by a new career, not loaded).
 
 ## Controls
 
@@ -32,8 +32,8 @@ A captain's career in the Caribbean, 1660: trade between ports, fight broadside 
 | Dock, board, dig | Enter | A | The prompt button |
 | Map / log / pause | M / L / Esc or P | Back (Select) / D-pad up / Start | MAP / LOG / II buttons |
 | Duel: step | A / D | Stick / D-pad left-right | Drag on the left 30% of the screen |
-| Duel: attack | J (hold W for high, S for low) | X (stick up = high, down = low) | Swipe up / across / down |
-| Duel: block / parry | Hold K / tap K just before a hit | Hold B / tap B | Hold / tap |
+| Duel: attack | J (hold W for high, S for low) | X (stick up = high, down = low) | Swipe up / across / down, or the High / Mid / Low buttons |
+| Duel: block / parry | Hold K / tap K just before a hit | Hold B / tap B | Hold / tap, or hold the Block button |
 
 ## Building
 

@@ -29,7 +29,7 @@ namespace SaltGlory {
 #endif
 
     // ---------- ships met at sea ----------
-    bool encActive, encHostile, encPirate, encWarship, encTreasure, encLegal, encFlee; Nation encNation; float encStart, nextEncounter, encCourse; Vector3 encPlayerStart;
+    bool encActive, encHostile, encPirate, encWarship, encTreasure, encLegal, encFlee, encArmed; Nation encNation; float encStart, nextEncounter, encCourse; Vector3 encPlayerStart;
 
     class Ball { public Transform t; public Vector3 v; public Ship from; public Shot type; public float life; public bool sprite; }
     readonly List<Ball> balls = new(); readonly Stack<Transform> ballPool = new(), chainPool = new();
@@ -99,18 +99,32 @@ namespace SaltGlory {
     Rect RDock => new Rect(Screen.width / 2f - 260 * S, Screen.height - (Skin ? 206 : 150) * S, 520 * S, 60 * S);
 
     /// <summary>Touches and the mouse as one list of pointers (GUI coordinates: y down).</summary>
-    IEnumerable<(int id, Vector2 p, bool began, bool down)> Pointers(){
+    /// Launch fix: built once per frame (every caller sees the same list), and a touch that began and ended between two frames
+    /// (a quick tap, or a fast swipe, on a slow frame: QA's duel taps) is no longer lost: it shows as a begin at its start
+    /// point (down) followed by a release at its end point.
+    readonly List<(int id, Vector2 p, bool began, bool down)> ptrList = new(); int ptrFrame = -1; readonly double[] touchSeen = new double[16];
+    List<(int id, Vector2 p, bool began, bool down)> Pointers(){
+      if (ptrFrame == Time.frameCount) return ptrList;
+      bool seed = ptrFrame < 0; ptrFrame = Time.frameCount; ptrList.Clear();
       var ts = Touchscreen.current;
-      if (ts != null) foreach (var t in ts.touches){
-        bool down = t.press.isPressed, began = t.press.wasPressedThisFrame;
-        if (!down && !t.press.wasReleasedThisFrame) continue;
+      if (ts != null){ int i = -1; foreach (var t in ts.touches){
+        i++; int tid = t.touchId.ReadValue(); bool down = t.press.isPressed, began = t.press.wasPressedThisFrame;
+        double st0 = t.startTime.ReadValue();   // a new touch in this slot has a new start time (browsers may reuse touch ids)
+        bool fresh = i < touchSeen.Length && st0 > 0 && st0 != touchSeen[i]; if (i < touchSeen.Length && st0 > 0) touchSeen[i] = st0;
+        if (!down && !t.press.wasReleasedThisFrame){
+          if (!fresh || seed) continue;   // a whole touch since the last frame
+          lastTouch = Time.unscaledTime; var sp = t.startPosition.ReadValue(); var ep = t.position.ReadValue();
+          ptrList.Add((tid, new Vector2(sp.x, Screen.height - sp.y), true, true)); ptrList.Add((tid, new Vector2(ep.x, Screen.height - ep.y), false, false));
+          continue;
+        }
         lastTouch = Time.unscaledTime;
-        var p = t.position.ReadValue(); yield return (t.touchId.ReadValue(), new Vector2(p.x, Screen.height - p.y), began, down);
-      }
+        var p = t.position.ReadValue(); ptrList.Add((tid, new Vector2(p.x, Screen.height - p.y), began || (fresh && !seed), down));
+      } }
       var ms = Mouse.current;   // ignore the mouse briefly after any touch (browsers can mirror touches as mouse clicks)
       if (ms != null && Time.unscaledTime - lastTouch > 0.6f && (ms.leftButton.isPressed || ms.leftButton.wasReleasedThisFrame)){
-        var p = ms.position.ReadValue(); yield return (-1, new Vector2(p.x, Screen.height - p.y), ms.leftButton.wasPressedThisFrame, ms.leftButton.isPressed);
+        var p = ms.position.ReadValue(); ptrList.Add((-1, new Vector2(p.x, Screen.height - p.y), ms.leftButton.wasPressedThisFrame, ms.leftButton.isPressed));
       }
+      return ptrList;
     }
     bool AnyPress(){
       var kb = Keyboard.current; if (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) return true;
@@ -229,6 +243,25 @@ namespace SaltGlory {
         $"cls={player.cls} ecls={enemy.cls} ecrew={enemy.crew:F0} fame={career.fame} pieces={career.mapPieces} dig={(career.digActive ? 1 : 0)} digx={career.digX:F0} digz={career.digZ:F0} " +
         $"board={(CanBoard() ? 1 : 0)} ask={(boardAsk ? 1 : 0)} duel={(state == State.Duel ? 1 : 0)} {DuelStatus()}");
     }
+    /// <summary>QA-only: spawn a ship alongside to starboard. spec = "role,class,nation,metres,hostile(0/1),board(0/1)", role is
+    /// merchant / warship / pirate / treasure.</summary>
+    public void QASpawn(string spec){
+      if (state != State.Sea || !player) return;
+      var a = spec.Split(','); string role = a[0]; int cls = int.Parse(a[1]), nat = int.Parse(a[2]); float dist = float.Parse(a[3], System.Globalization.CultureInfo.InvariantCulture);
+      encPirate = role == "pirate"; encWarship = role == "warship"; encTreasure = role == "treasure"; encNation = (Nation)nat;
+      SpawnEncounter(player.Pos + player.Right * dist, player.heading, cls); enemy.speed = player.speed;
+      if (a.Length > 4 && a[4] == "1" && !encHostile) BeginBattle(true);
+      Debug.Log($"[SG] qa: spawned {enemy.label} crew={enemy.crew:F0} armed={(encArmed ? 1 : 0)}");
+      if (a.Length > 5 && a[5] == "1") Board("qa");
+    }
+    /// <summary>QA-only: the player's ship founders now (tests washing ashore).</summary>
+    public void QASink(){ if (state == State.Sea && player && !player.sinking){ player.hull = 0f; Sink(player); } }
+    /// <summary>QA-only: the enemy fires a broadside of the given shot now (0 round, 1 chain, 2 grape) from the side facing us.</summary>
+    public void QAVolley(string shotType){
+      if (state != State.Sea || !encActive || enemy.gone) return;
+      enemyShot = (Shot)int.Parse(shotType); var el = enemy.transform.InverseTransformPoint(player.Pos); int side = el.x > 0f ? 1 : -1;
+      enemy.portReady = enemy.starReady = 0f; Fire(enemy, side, "qa");
+    }
 #endif
     void Aground(Ship s, Vector3 prev){
       if (s.gone || s.sinking) return;
@@ -280,11 +313,15 @@ namespace SaltGlory {
       enemy.label = encPirate ? $"Pirate {cn}" : encTreasure ? "Spanish treasure galleon" : $"{World.Adj[(int)encNation]} {(encWarship ? "warship" : "merchant")} {cn}";
       SetLook(enemy, encPirate ? 5 : (int)encNation + 1);
       encActive = true; encHostile = false; encLegal = true; encFlee = !encWarship && !encPirate;
+      // launch fix: warships, pirates and treasure galleons always carry grape and chain; merchants sometimes do, and the
+      // lookout says so (an unarmed merchant only fires round shot)
+      bool merchant = !encWarship && !encPirate && !encTreasure;
+      encArmed = !merchant || Random.value < (enemy.cls == ShipClass.Brigantine ? 0.7f : 0.5f);
       encCourse = hdg;
       bool war = career.marque >= 0 && World.AtWar((Nation)career.marque, encNation);
-      Debug.Log($"[SG] sail ho: {enemy.label} class={enemy.C.name} dist={Vector3.Distance(at, player.Pos):F0}");
+      Debug.Log($"[SG] sail ho: {enemy.label} class={enemy.C.name} armed={(encArmed ? 1 : 0)} dist={Vector3.Distance(at, player.Pos):F0}");
       if (encPirate || (encWarship && (career.IsHostile(encNation) || war))) BeginBattle(true);
-      else Banner($"Sail ho! A {enemy.label}. Fire on her to attack" + (war ? " (legal under your letter of marque)" : ""));
+      else Banner($"Sail ho! A {enemy.label}" + (merchant && encArmed ? ", armed with grape and chain" : "") + ". Fire on her to attack" + (war ? " (legal under your letter of marque)" : ""));
     }
     /// <summary>The encounter turns into a fight: either they attack us (hostile on sight) or we attacked them.</summary>
     void BeginBattle(bool theyAttack){
@@ -336,7 +373,7 @@ namespace SaltGlory {
         if (offBeam < 22f){
           int side = local.x > 0f ? 1 : -1;
           if (Time.time >= (side < 0 ? e.portReady : e.starReady))   // pick the shot for this volley: grape up close, chain at full sails, else round
-            enemyShot = dist < 30f && player.crew > 30f ? Shot.Grape : player.sails > 55f && Random.value < 0.35f ? Shot.Chain : Shot.Round;
+            enemyShot = !encArmed ? Shot.Round : dist < 30f && player.crew > 30f ? Shot.Grape : player.sails > 55f && Random.value < 0.35f ? Shot.Chain : Shot.Round;
           Fire(e, side, "ai");
         }
       }
@@ -412,7 +449,10 @@ namespace SaltGlory {
       switch (type){
         case Shot.Round: s.hull -= 8f * hk * (s == player ? 0.7f : 1f); s.crew -= 1.5f * ck; break;   // enemy round shot ~30% lighter (M1 QA)
         case Shot.Chain: s.sails -= 13f * k / Mathf.Sqrt(s.C.hullK); s.hull -= 2f * hk; break;
-        case Shot.Grape: s.crew -= 9f * ck; s.hull -= 1.5f * hk; break;
+        case Shot.Grape:{   // launch fix: a full grape broadside that all strikes home takes ~15-25% of the crew aboard (was 70-120 men)
+          int balls = Mathf.Max(1, Mathf.Max(from.portGuns.Count, from.starGuns.Count));
+          float frac = Mathf.Clamp(0.2f * Mathf.Sqrt(from.C.gunK / s.C.hullK), 0.15f, 0.25f);
+          s.crew -= Mathf.Max(0.5f, frac * s.crew / balls); s.hull -= 1.5f * hk; break; }
       }
       if (!s.mastDown && s.sails < 30f){ s.mastDown = true; GameAudio.I?.Play("mast"); Debug.Log($"[SG] mast down on {(s == player ? "player" : "enemy")}"); if (s == enemy) Banner($"Her mainmast goes by the board! The {enemy.label} is slowed"); }
       s.hull = Mathf.Max(0f, s.hull); s.sails = Mathf.Max(0f, s.sails); s.crew = Mathf.Max(0f, s.crew);
@@ -569,7 +609,7 @@ namespace SaltGlory {
         else { var sp = cam.WorldToScreenPoint(dg); if (sp.z > 0){ var g = new Vector2(sp.x, H - sp.y); if (digMarkTex) GUI.DrawTexture(new Rect(g.x - 24 * s, g.y - 24 * s, 48 * s, 48 * s), digMarkTex); else Label(new Rect(g.x - 30 * s, g.y - 24 * s, 60 * s, 48 * s), "X", new GUIStyle(big){ fontSize = Mathf.RoundToInt(40 * s) }, new Color(0.75f, 0.1f, 0.06f)); } }
       }
       string prompt = Prompt();
-      if (prompt != null){
+      if (prompt != null && !boardAsk){   // launch fix: the confirm panel replaces the prompt (it showed under it)
         var rd = RDock;
         if (Skin){ SkinStyles(); HudButton(rd, prompt + "  (Enter / A / tap)"); }
         else { Box(rd, new Color(0.25f, 0.17f, 0.08f, 0.85f)); Label(rd, prompt + "  (Enter / A / tap)", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment); }
@@ -589,9 +629,10 @@ namespace SaltGlory {
       }
 
       TreasureGUI(s, W, H);
-      if (Time.unscaledTime < bannerUntil && !mapOpen){
-        Box(new Rect(W / 2f - 380 * s, 150 * s, 760 * s, 40 * s), new Color(0.05f, 0.04f, 0.03f, 0.6f));
-        Label(new Rect(W / 2f - 380 * s, 150 * s, 760 * s, 40 * s), banner, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, wordWrap = true }, Parchment);
+      if (Time.unscaledTime < bannerUntil && !mapOpen && !boardAsk){   // launch fix: the box grows with the text; hidden behind the board confirm
+        var bst = new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, wordWrap = true }; float bh = Mathf.Max(40f * s, bst.CalcHeight(new GUIContent(banner), 740f * s) + 12f * s);
+        Box(new Rect(W / 2f - 380 * s, 150 * s, 760 * s, bh), new Color(0.05f, 0.04f, 0.03f, 0.6f));
+        Label(new Rect(W / 2f - 370 * s, 150 * s, 740 * s, bh), banner, bst, Parchment);
       }
       if (mapOpen){ MapGUI(s, W, H); return; }
       if (logOpen || boardAsk){
@@ -627,7 +668,7 @@ namespace SaltGlory {
     void DrawFire(Rect r, string label, float ready){
       float left = ready - Time.time; Box(r, Panel);
       if (left > 0f){ float f = Mathf.Clamp01(left / player.ReloadTime); Box(new Rect(r.x, r.y + r.height * (1f - f), r.width, r.height * f), new Color(0.5f, 0.15f, 0.1f, 0.45f)); }
-      Label(r, left > 0f ? $"{label}\n{left:F1}s" : label, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, left > 0f ? new Color(0.8f, 0.7f, 0.6f) : Parchment);
+      Label(r, left > 0f ? $"{label}\n{left:F1}s" : label, FitStyle(label, r.width - 16f * S, 15f * S), left > 0f ? new Color(0.8f, 0.7f, 0.6f) : Parchment);
     }
   }
 }
