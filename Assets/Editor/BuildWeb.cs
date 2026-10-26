@@ -151,11 +151,23 @@ public static class BuildWeb {
     g.cam = cam; g.sea = sea.transform; g.seaMat = seaMat; g.chainMesh = chainMesh; g.chainMat = chainMat; g.landMask = landMask;
     // M2 art by file name (Art Dev's M2 set); anything missing stays null and the game falls back
     g.portsJson = Load<TextAsset>("Assets/Art/Map/SG_Map_Ports.json");
-    g.titleTex = Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_OpenSea.png");
+    g.titleTex = Load<Texture2D>("Assets/Art/Title/SG_Title_Backdrop.png") ?? Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_OpenSea.png");
     g.mapTex = Art("Assets/Art/Map", "SG_Map_Caribbean"); g.portMarkerTex = Art("Assets/Art/Map", "PortMarker"); g.portRingTex = Art("Assets/Art/Map", "PortMarker_Ring");
     if (g.portMarkerTex == g.portRingTex) g.portMarkerTex = Load<Texture2D>("Assets/Art/Map/SG_Map_PortMarker.png");
     g.shipMarkerTex = Art("Assets/Art/Map", "ShipMarker");
-    g.panelTex = Art("Assets/Art/UI", "Panel_Parchment"); g.buttonTex = Art("Assets/Art/UI", "Button_Normal"); g.buttonHiTex = Art("Assets/Art/UI", "Button_Highlighted"); g.coinTex = Art("Assets/Art/UI", "Icon_Coin");
+    g.coinTex = Art("Assets/Art/UI", "Icon_Coin");
+    // M4 skin (PR #11): Assets/Art/UI/HUD/SG_HUD_* (not the M2 SG_UI_* sprites), title backdrop + logo, treasure fragment + X
+    Texture2D Hud(string n) => Load<Texture2D>($"Assets/Art/UI/HUD/SG_HUD_{n}.png");
+    g.panelTex = Hud("Panel") ?? Art("Assets/Art/UI", "Panel_Parchment"); g.buttonTex = Hud("Button_Normal") ?? Art("Assets/Art/UI", "Button_Normal");
+    g.buttonHiTex = Hud("Button_Hover") ?? Art("Assets/Art/UI", "Button_Highlighted"); g.buttonDownTex = Hud("Button_Pressed");
+    g.barFrameTex = Hud("Bar_Frame"); g.hullFillTex = Hud("Bar_Fill_Hull"); g.crewFillTex = Hud("Bar_Fill_Crew"); g.readoutTex = Hud("Readout");
+    g.gaugeFrameTex = Hud("Gauge_Frame"); g.gaugeNeedleTex = Hud("Gauge_Needle"); g.shotBackTex = Hud("ShotSlot_Back"); g.shotFrameTex = Hud("ShotSlot_Frame");
+    const string sailFill = "Assets/Art/UI/HUD/SG_HUD_Gauge_SailFill.png";   // read on the CPU for the radial fill
+    if (AssetImporter.GetAtPath(sailFill) is TextureImporter sfi && !sfi.isReadable){ sfi.isReadable = true; sfi.SaveAndReimport(); }
+    g.gaugeSailTex = Load<Texture2D>(sailFill); g.shotChainTex = Load<Texture2D>("Assets/Art/Projectiles/SG_Shot_Chain.png");
+    g.titleLogoTex = Load<Texture2D>("Assets/Art/Title/SG_Title_Logo.png");
+    g.fragTex = Load<Texture2D>("Assets/Art/Treasure/SG_Treasure_Fragment_Template.png"); g.treasureXTex = Load<Texture2D>("Assets/Art/Treasure/SG_Treasure_X.png");
+    foreach (var t in new[]{ g.panelTex, g.barFrameTex, g.gaugeFrameTex, g.titleLogoTex, g.fragTex }) if (!t) Debug.LogWarning("[Setup] an M4 skin texture is missing (fallback)");
     g.tavernTex = Art("Assets/Art/Towns", "Town_Tavern"); g.governorTex = Art("Assets/Art/Towns", "Town_Governor"); g.merchantTex = Art("Assets/Art/Towns", "Town_Merchant"); g.shipwrightTex = Art("Assets/Art/Towns", "Town_Shipwright");
     string[] nat = { "England", "Spain", "France", "Dutch" };
     var anchors = Load<TextAsset>("Assets/Art/Towns/SG_Town_FlagAnchors.json"); var aj = anchors ? anchors.text : "";
@@ -212,11 +224,11 @@ public static class BuildWeb {
 
   /// <summary>Page hardening (same as Neon Hive): canvas touch-action:none + preventDefault on touch events, no context menu on
   /// the canvas, Space / arrow keys / Tab don't scroll or move focus. Unity still receives all events. Title = Salt and Glory.</summary>
-  static void PatchIndexHtml(string outDir){
+  static void PatchIndexHtml(string outDir, bool qaHook){
     var p = Path.Combine(outDir, "index.html"); if (!File.Exists(p)) return;
     var html = File.ReadAllText(p); if (html.Contains("sg-input-guard")) return;
     html = System.Text.RegularExpressions.Regex.Replace(html, "<title>.*?</title>", "<title>Salt and Glory</title>");
-    const string css = "<style id=\"sg-input-guard-css\">html,body{overscroll-behavior:none;background:#0E343C}#unity-canvas{touch-action:none;-ms-touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;outline:none}</style>";
+    const string css = "<style id=\"sg-input-guard-css\">html,body{overscroll-behavior:none;background:#0E343C}#unity-container.unity-desktop{position:fixed;left:0;top:0;right:0;bottom:0;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center}#unity-canvas{touch-action:none;-ms-touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;outline:none}</style>";
     const string js = @"<script id=""sg-input-guard"">(function(){
   var c=document.getElementById('unity-canvas'); if(!c) return;
   var stop=function(e){ if(e.cancelable) e.preventDefault(); };
@@ -230,7 +242,7 @@ public static class BuildWeb {
   if(!c.hasAttribute('tabindex')) c.setAttribute('tabindex','-1');
   c.addEventListener('pointerdown',function(){ try{ c.focus(); }catch(_){} });
 })();</script>";
-    html = html.Replace(".then((unityInstance) => {", ".then((unityInstance) => { window.sgUnity = unityInstance;");   // lets the smoke test call Game.QAStatus
+    if (qaHook) html = html.Replace(".then((unityInstance) => {", ".then((unityInstance) => { window.sgUnity = unityInstance;");   // dev / SG_QA builds only: the self-check calls Game.QAStatus
     html = html.Replace("</head>", css + "\n  </head>").Replace("</body>", js + "\n  </body>");
     File.WriteAllText(p, html);
   }
@@ -245,13 +257,14 @@ public static class BuildWeb {
       PlayerSettings.WebGL.threadsSupport = false;
       PlayerSettings.productName = "Salt and Glory"; PlayerSettings.companyName = "mikenev";
       PlayerSettings.defaultWebScreenWidth = 1280; PlayerSettings.defaultWebScreenHeight = 720;
-      bool dev = System.Environment.GetEnvironmentVariable("SG_DEV") == "1";
+      bool dev = System.Environment.GetEnvironmentVariable("SG_DEV") == "1", qa = !dev && System.Environment.GetEnvironmentVariable("SG_QA") == "1";   // SG_QA: a release-like build with the QAStatus hook, for the self-check only
       if (dev){ PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.FullWithStacktrace; PlayerSettings.SetStackTraceLogType(LogType.Exception, StackTraceLogType.Full); }
       else { PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly; PlayerSettings.SetStackTraceLogType(LogType.Exception, StackTraceLogType.ScriptOnly); }
-      var outDir = Path.GetFullPath(dev ? "Builds/WebGLDev" : "docs");
-      var r = BuildPipeline.BuildPlayer(new[]{ ScenePath }, outDir, BuildTarget.WebGL, dev ? BuildOptions.Development : BuildOptions.None);
+      var outDir = Path.GetFullPath(dev ? "Builds/WebGLDev" : qa ? "Builds/WebGLQA" : "docs");
+      var r = BuildPipeline.BuildPlayer(new BuildPlayerOptions{ scenes = new[]{ ScenePath }, locationPathName = outDir, target = BuildTarget.WebGL,
+        options = dev ? BuildOptions.Development : BuildOptions.None, extraScriptingDefines = qa ? new[]{ "SG_QA" } : null });
       Debug.Log("BUILD RESULT: " + r.summary.result + " size=" + r.summary.totalSize);
-      if (r.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded){ File.WriteAllText(Path.Combine(outDir, ".nojekyll"), ""); PatchIndexHtml(outDir); code = 0; }
+      if (r.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded){ File.WriteAllText(Path.Combine(outDir, ".nojekyll"), ""); PatchIndexHtml(outDir, dev || qa); code = 0; }
     } catch (System.Exception e){ Debug.LogException(e); }
     if (Application.isBatchMode) EditorApplication.Exit(code);
   }

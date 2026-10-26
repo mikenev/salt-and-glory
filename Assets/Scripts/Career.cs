@@ -14,6 +14,7 @@ namespace SaltGlory {
     // M3 (old M2 saves load with these defaults: a sloop, no fame, no rank, no map pieces, prices at rest)
     public int shipClass, fame, captures, duelsWon, treasures, missionsDone, mapPieces;
     public int[] service = new int[4], rankSeen = new int[4];   // service under a letter of marque, per nation; the rank each governor last announced
+    public bool prize;   // M4: sailing a captured ship (worth less in trade)
     public bool digActive; public float digX, digZ; public string digNear = "";
     public float[] market = new float[0];   // per port x good price pressure: + after buying, - after selling, drifts back to 0
     public static readonly string[] Ranks = { "Ensign", "Lieutenant", "Captain", "Commodore", "Admiral" };   // matches Art Dev's rank icons
