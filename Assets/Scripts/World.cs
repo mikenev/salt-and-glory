@@ -52,6 +52,7 @@ namespace SaltGlory {
       P("Saint-Pierre", Nation.France, 14.74f, -61.18f, 0.7f, 1.2f, 0.8f, 1.1f, 1.2f);
       P("Willemstad", Nation.Dutch, 12.11f, -68.93f, 1.3f, 1.2f, 1.1f, 0.7f, 1.3f);
       P("Sint Eustatius", Nation.Dutch, 17.49f, -62.98f, 1.2f, 1.3f, 1.0f, 0.75f, 1.2f);
+      P("St. Kitts", Nation.England, 17.32f, -62.80f, 0.7f, 0.75f, 1.0f, 1.25f, 1.3f);   // English Old Road; the French held both ends (Basseterre)
     }
 
     // ---------- land ----------

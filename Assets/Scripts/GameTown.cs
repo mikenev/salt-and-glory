@@ -115,6 +115,7 @@ namespace SaltGlory {
         rumours.Add(k == 1 ? $"\"{World.Goods[g]} is cheap in {lo.name}, they say.\"" : $"\"Merchants in {hi.name} pay well for {World.Goods[g]}.\"");
       }
       rumours.Add($"\"Pirates have been seen off {World.Ports[r.Next(World.Ports.Count)].name}. Keep your guns loaded.\"");
+      rumours.Add("\"St. Kitts is a queer place: the English hold the middle of the island and the French both ends, with their town at Basseterre. They share it, but not happily.\"");
       rumours.Add("\"Spain is at war with England, France and the Dutch, and the English and Dutch are at each other's throats too.\"");
       for (int i = 0; i < 4; i++) if (career.IsHostile((Nation)i)) rumours.Add($"\"The {World.Adj[i]} would hang you on sight, captain. Stay clear of their ports.\"");
       rumourAt = r.Next(rumours.Count);
