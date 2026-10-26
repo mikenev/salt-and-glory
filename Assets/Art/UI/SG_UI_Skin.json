@@ -1,0 +1,490 @@
+{
+ "note": "All sizes in pixels. Rects are [x, y, w, h] with a top-left origin unless noted. Unity spriteBorder order is left, bottom, right, top (x, y, z, w). PPU 100 for every sprite.",
+ "sprites": {
+  "panel": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Panel.png",
+   "size": [
+    384,
+    384
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "border_lbrt": [
+    64,
+    64,
+    64,
+    64
+   ],
+   "type": "9-slice (Image Type Sliced), Fill Center on",
+   "content_padding_lbrt": [
+    40,
+    40,
+    40,
+    40
+   ]
+  },
+  "button_normal": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Button_Normal.png",
+   "size": [
+    320,
+    96
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "border_lbrt": [
+    36,
+    36,
+    36,
+    36
+   ],
+   "type": "9-slice",
+   "content_padding_lbrt": [
+    24,
+    18,
+    24,
+    18
+   ]
+  },
+  "button_hover": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Button_Hover.png",
+   "size": [
+    320,
+    96
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "border_lbrt": [
+    36,
+    36,
+    36,
+    36
+   ],
+   "type": "9-slice",
+   "content_padding_lbrt": [
+    24,
+    18,
+    24,
+    18
+   ]
+  },
+  "button_pressed": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Button_Pressed.png",
+   "size": [
+    320,
+    96
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "border_lbrt": [
+    36,
+    36,
+    36,
+    36
+   ],
+   "type": "9-slice",
+   "content_padding_lbrt": [
+    24,
+    18,
+    24,
+    18
+   ],
+   "note": "pressed face is darker with a top inner shadow; offset the label 2 px down when pressed"
+  },
+  "gauge_frame": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Gauge_Frame.png",
+   "size": [
+    256,
+    256
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "layer": 0,
+   "face_radius": 94,
+   "sail_track_radii": [
+    94,
+    111
+   ],
+   "centre_px": [
+    128,
+    128
+   ]
+  },
+  "gauge_sail_fill": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Gauge_SailFill.png",
+   "size": [
+    256,
+    256
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "layer": 1,
+   "unity": "Image Type Filled, Radial 360, Fill Origin Bottom, Clockwise on; fillAmount = sail fraction (0 = furled, 1 = full sail)",
+   "same_size_and_centre_as": "gauge_frame"
+  },
+  "gauge_needle": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Gauge_Needle.png",
+   "size": [
+    40,
+    184
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "layer": 2,
+   "pivot_px_top_left": [
+    20,
+    92
+   ],
+   "place_pivot_at": "gauge_frame centre",
+   "points": "up (+Y) at rotation 0",
+   "rotation_range_deg": [
+    -180,
+    180
+   ],
+   "unity_rotation": "localEulerAngles.z = -bearing (Unity z is counter-clockwise). bearing 0 = top of the dial (dead ahead), +90 = starboard, -90 = port, 180 = astern.",
+   "meaning": "arrow points where the wind blows TO relative to the ship's bow; flip 180 if you prefer 'wind from'"
+  },
+  "bar_frame": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Bar_Frame.png",
+   "size": [
+    512,
+    56
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "border_lbrt": [
+    28,
+    14,
+    28,
+    14
+   ],
+   "type": "9-slice; dark empty track inside",
+   "fill_window_rect": [
+    16,
+    14,
+    480,
+    28
+   ],
+   "fill_window_note": "Place the fill sprite over this rect (it scales with the frame's width minus 32 px)."
+  },
+  "bar_fill_hull": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Bar_Fill_Hull.png",
+   "size": [
+    480,
+    28
+   ],
+   "pivot": [
+    0,
+    0.5
+   ],
+   "size_matches": "fill_window_rect",
+   "unity": "Image Type Filled, Horizontal, Origin Left (or scale X from the left pivot)"
+  },
+  "bar_fill_crew": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Bar_Fill_Crew.png",
+   "size": [
+    480,
+    28
+   ],
+   "pivot": [
+    0,
+    0.5
+   ],
+   "size_matches": "fill_window_rect",
+   "unity": "Image Type Filled, Horizontal, Origin Left"
+  },
+  "shot_slot_back": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_ShotSlot_Back.png",
+   "size": [
+    128,
+    128
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "layer": 0,
+   "note": "parchment disc behind the shot icon"
+  },
+  "shot_slot_frame": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_ShotSlot_Frame.png",
+   "size": [
+    128,
+    128
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "layer": 2,
+   "icon_window_diameter": 92,
+   "icon_window_rect": [
+    18,
+    18,
+    92,
+    92
+   ],
+   "note": "brass ring with a transparent centre; draw the shot icon between back (layer 0) and this frame"
+  },
+  "readout": {
+   "file": "Assets/Art/UI/HUD/SG_HUD_Readout.png",
+   "size": [
+    320,
+    80
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "border_lbrt": [
+    92,
+    24,
+    24,
+    24
+   ],
+   "type": "9-slice (stretch horizontally)",
+   "icon_socket_rect": [
+    14,
+    14,
+    52,
+    52
+   ],
+   "icon_note": "put SG_Icon_Coin or a cargo icon in the socket (about 52 px)",
+   "text_rect": [
+    94,
+    16,
+    210,
+    48
+   ],
+   "text_note": "text area grows with width; right padding 16"
+  },
+  "title_logo": {
+   "file": "Assets/Art/Title/SG_Title_Logo.png",
+   "size": [
+    1808,
+    297
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "text": "Salt and Glory",
+   "font": "Cinzel Decorative Black (SIL OFL 1.1), see Assets/Art/LICENSES/"
+  },
+  "title_backdrop": {
+   "file": "Assets/Art/Title/SG_Title_Backdrop.png",
+   "size": [
+    1280,
+    720
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ]
+  },
+  "fragment_template": {
+   "file": "Assets/Art/Treasure/SG_Treasure_Fragment_Template.png",
+   "size": [
+    512,
+    512
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "window_rect": [
+    112,
+    104,
+    288,
+    288
+   ],
+   "window_note": "transparent hole with a slightly torn edge; draw the real map region behind it (or in a RectMask2D of this rect). The rect is the hole's bounding box.",
+   "window_centre_px": [
+    256,
+    248
+   ]
+  },
+  "treasure_x": {
+   "file": "Assets/Art/Treasure/SG_Treasure_X.png",
+   "size": [
+    96,
+    96
+   ],
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "note": "pivot centre = the dig spot; ~60 px across"
+  }
+ },
+ "title": {
+  "backdrop": "Assets/Art/Title/SG_Title_Backdrop.png",
+  "size": [
+   1280,
+   720
+  ],
+  "backdrop_note": "full screen, matches the 1280x720 town screens; calm sky upper-centre for the logo, calm sea bottom-centre for menu buttons",
+  "logo_anchor_suggestion": {
+   "anchor": "top-centre",
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "centre_px_top_left": [
+    640,
+    190
+   ],
+   "width_px": 760
+  },
+  "menu_area_suggestion_rect": [
+   490,
+   430,
+   300,
+   250
+  ]
+ },
+ "hud_anchors": {
+  "note": "Suggested Canvas anchors at a 1280x720 reference resolution (Canvas Scaler, Scale With Screen Size). Offsets are from the anchor, in reference pixels.",
+  "hull_bar": {
+   "anchor": "top-left",
+   "pivot": [
+    0,
+    1
+   ],
+   "offset": [
+    24,
+    -24
+   ],
+   "size": [
+    320,
+    40
+   ]
+  },
+  "crew_bar": {
+   "anchor": "top-left",
+   "pivot": [
+    0,
+    1
+   ],
+   "offset": [
+    24,
+    -70
+   ],
+   "size": [
+    320,
+    40
+   ]
+  },
+  "gold_readout": {
+   "anchor": "top-left",
+   "pivot": [
+    0,
+    1
+   ],
+   "offset": [
+    24,
+    -118
+   ],
+   "size": [
+    240,
+    60
+   ]
+  },
+  "cargo_readout": {
+   "anchor": "top-left",
+   "pivot": [
+    0,
+    1
+   ],
+   "offset": [
+    24,
+    -184
+   ],
+   "size": [
+    240,
+    60
+   ]
+  },
+  "wind_sail_gauge": {
+   "anchor": "top-right",
+   "pivot": [
+    1,
+    1
+   ],
+   "offset": [
+    -24,
+    -24
+   ],
+   "size": [
+    180,
+    180
+   ],
+   "layers": [
+    "gauge_frame",
+    "gauge_sail_fill",
+    "gauge_needle"
+   ]
+  },
+  "shot_slots": {
+   "anchor": "bottom-centre",
+   "pivot": [
+    0.5,
+    0
+   ],
+   "offset": [
+    0,
+    24
+   ],
+   "size_each": [
+    88,
+    88
+   ],
+   "spacing": 12,
+   "layers": [
+    "shot_slot_back",
+    "(shot icon)",
+    "shot_slot_frame"
+   ]
+  },
+  "menu_panel": {
+   "anchor": "centre",
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "size": "any, 9-slice"
+  },
+  "menu_button": {
+   "anchor": "centre",
+   "pivot": [
+    0.5,
+    0.5
+   ],
+   "size": [
+    300,
+    64
+   ],
+   "states": {
+    "normal": "button_normal",
+    "highlighted/selected": "button_hover",
+    "pressed": "button_pressed",
+    "disabled": "button_normal at 50% alpha"
+   }
+  }
+ }
+}
