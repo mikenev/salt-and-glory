@@ -61,9 +61,31 @@ namespace SaltGlory {
       return NearPort(out var p) ? $"Dock at {p.name}" : null;
     }
     void Interact(string src){
-      if (CanBoard()){ Board(src); return; }
+      if (CanBoard()){ if (encHostile) Board(src); else AskBoard(src); return; }
       if (NearDig()){ StartDig(src); return; }
       TryDock(src);
+    }
+
+    // ---------- M4 QA: boarding a ship that has not fired on you asks first (it is an attack, often piracy) ----------
+    bool boardAsk;
+    bool BoardLawful => encPirate || (career.marque >= 0 && World.AtWar((Nation)career.marque, encNation));
+    void AskBoard(string src){
+      boardAsk = true; Time.timeScale = 0f; ptrs.Clear(); navRects.Clear(); focus = 1;   // focus starts on "Leave her be"
+      Debug.Log($"[SG] board confirm asked: {enemy.label} lawful={BoardLawful} by {src}");
+    }
+    void CloseAsk(bool board, string src){
+      boardAsk = false; Time.timeScale = paused || mapOpen ? 0f : 1f; ptrs.Clear(); focus = -1;
+      Debug.Log($"[SG] board confirm {(board ? "yes" : "no")} by {src}");
+      if (board && CanBoard()) Board(src);
+    }
+    void BoardAskGUI(){
+      PanelBox(R(330, 210, 620, 290));
+      Label(R(370, 244, 540, 40), $"Board the {enemy.label}?", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter }, Ink);
+      Label(R(370, 292, 540, 80), BoardLawful ? $"She sails for an enemy of your {World.Adj[career.marque]} patron: a lawful prize under your letter of marque."
+        : $"She has not fired on you. Boarding her is piracy: {World.NationNames[(int)encNation]} will not forget it.", new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
+      if (Btn(R(370, 392, 260, 62), BoardLawful ? "Board her" : "Board her (piracy)")) CloseAsk(true, "confirm");
+      if (Btn(R(650, 392, 260, 62), "Leave her be")) CloseAsk(false, "cancel");
+      Label(R(370, 460, 540, 24), "Enter / A / tap to choose  ·  Esc / B to leave her be", new GUIStyle(inkSmall){ alignment = TextAnchor.MiddleCenter }, Ink);
     }
 
     // ---------- fame and rank ----------
@@ -78,6 +100,7 @@ namespace SaltGlory {
     readonly Fighter dp = new(), de = new();
     float duelT, aiT, aiReactAt = -1f, aiBlockUntil, aggr, reactP, parryP, smartP; bool aiWillBlock, aiParry; int aiGuard;
     int duelOver;   // 0 fighting, 1 won, 2 lost
+    float eGrit = 1f;
     string duelResult = ""; float duelOverT;
     // touch: left 30% of the screen is a step stick; elsewhere swipe up / across / down to attack, hold to block, tap to parry
     int dStick = -99, dGest = -99; float dStickX, dGestT, dTouchBlockUntil; Vector2 dGestP; bool dGestHold;
@@ -90,8 +113,12 @@ namespace SaltGlory {
       // crew sizes set the starting line: more hands push the fight toward the enemy's rail (grape shot pays off here)
       float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * DeckL * 0.3f;
       Init(dp, c - 0.9f, 1); Init(de, c + 0.9f, -1);
-      bool war = encWarship || encTreasure;   // the AI captain: warships and treasure guards fight best, merchants worst
-      aggr = war ? 0.62f : encPirate ? 0.58f : 0.42f; reactP = war ? 0.55f : encPirate ? 0.48f : 0.35f; parryP = war ? 0.16f : 0.1f; smartP = war ? 0.6f : 0.4f;
+      // the AI captain: warships and treasure guards fight best; merchant captains get tougher with their ship (M4 balance:
+      // a fluyt's master is no pushover), and bigger ships' captains give ground more slowly (eGrit scales pushes against them)
+      bool war = encWarship || encTreasure; float cl = enemy.cls / 4f;
+      aggr = war ? 0.62f : encPirate ? 0.58f : 0.5f + 0.1f * cl; reactP = war ? 0.55f : encPirate ? 0.48f : 0.48f + 0.12f * cl;
+      parryP = war ? 0.16f : encPirate ? 0.1f : 0.12f + 0.06f * cl; smartP = war ? 0.6f : encPirate ? 0.4f : 0.5f + 0.15f * cl;
+      eGrit = 1f / (1f + 0.1f * enemy.cls);
       aiT = 1.2f; aiReactAt = -1f;
       Debug.Log($"[SG] boarding {enemy.label} by {src} crew={pc:F0} vs {ec:F0} start={c:F2}");
     }
@@ -173,7 +200,7 @@ namespace SaltGlory {
         float pb = d.guardH == a.h ? 0.15f : 0.45f; d.x += a.dir * pb; Flash(d, "BLOCK"); GameAudio.I?.Clash();
         Debug.Log($"[SG] duel {who} {HName[a.h]} blocked ({HName[d.guardH]} guard)");
       } else {
-        float push = 1.25f + (d.stagger > 0f ? 0.45f : 0f);
+        float push = (1.25f + (d.stagger > 0f ? 0.45f : 0f)) * (d == de ? eGrit : 1f);
         d.x += a.dir * push; a.x += a.dir * push * 0.8f; d.phase = 0; d.block = false; d.stagger = 0.25f;
         Flash(d, "HIT"); GameAudio.I?.Play("body"); GameAudio.I?.Clash();
         Debug.Log($"[SG] duel hit {(pl ? "enemy" : "player")} {HName[a.h]} vs {(d.block ? HName[d.guardH] + " guard" : "no guard")} px={dp.x:F2} ex={de.x:F2}");
@@ -190,11 +217,14 @@ namespace SaltGlory {
         career.duelsWon++; career.captures++; career.victories++;
         int fame = 10 + 15 + (enemy.cls == ShipClass.Galleon ? 15 : enemy.cls == ShipClass.Frigate ? 8 : 0); Fame(fame, "duel won, ship captured");
         if (LawfulPrize){ career.Serve(16); career.AddRep((Nation)career.marque, 6); }
-        int gold = enemy.cls == ShipClass.Galleon ? Random.Range(1200, 2000) : encPirate ? Random.Range(300, 500) : encWarship ? Random.Range(200, 350) : Random.Range(250, 450);
+        int gold = enemy.cls == ShipClass.Galleon ? Random.Range(1200, 2000) : encPirate ? Random.Range(300, 500) : encWarship ? Random.Range(200, 350) : Random.Range(160, 320);
         career.gold += gold; string loot = $"+{gold} gold";
-        int goods = enemy.cls == ShipClass.Fluyt ? Random.Range(25, 55) : enemy.cls == ShipClass.Galleon ? Random.Range(15, 35) : encWarship ? 0 : Random.Range(6, 16);
-        for (int left = goods; left > 0;){ int g = Random.Range(0, 5), n = Mathf.Min(left, Random.Range(4, 14), career.HoldMax - career.Hold); if (n <= 0) break; career.cargo[g] += n; left -= n; loot += $", {n} {World.Goods[g]}"; }
-        float pieceP = enemy.cls == ShipClass.Galleon ? 1f : encPirate ? 0.7f : 0.35f;
+        // M4 balance: a fluyt's hold is no longer a fortune; M4 QA: each good is listed once
+        int goods = enemy.cls == ShipClass.Fluyt ? Random.Range(12, 28) : enemy.cls == ShipClass.Galleon ? Random.Range(10, 25) : encWarship ? 0 : Random.Range(5, 12);
+        var got = new int[5];
+        for (int left = goods; left > 0;){ int g = Random.Range(0, 5), n = Mathf.Min(left, Random.Range(4, 14), career.HoldMax - career.Hold); if (n <= 0) break; career.cargo[g] += n; got[g] += n; left -= n; }
+        for (int g = 0; g < 5; g++) if (got[g] > 0) loot += $", {got[g]} {World.Goods[g]}";
+        float pieceP = enemy.cls == ShipClass.Galleon ? 0.6f : encPirate ? 0.4f : 0.2f;
         if (Random.value < pieceP){ loot += ", a torn map piece"; GainPiece("captured"); }
         if (!encPirate && career.missionTarget == (int)encNation && !career.missionDone){ career.missionDone = true; loot += ". Mission done: report to the governor"; }
         duelResult = $"The {enemy.label} is yours! {loot}.";
@@ -212,6 +242,7 @@ namespace SaltGlory {
       if (duelOver == 1 && switchShip){
         int from = player.cls; ApplyClass(player, enemy.cls); career.shipClass = player.cls;
         player.hull = Mathf.Max(enemy.hull, 40f); player.sails = Mathf.Max(enemy.sails, 40f); player.crew = Mathf.Min(player.crew, player.Complement); player.mastDown = false;
+        career.prize = true;   // a prize ship fetches less at the shipwright (M4 balance)
         int over = career.Hold - career.HoldMax; for (int g = 4; g >= 0 && over > 0; g--){ int n = Mathf.Min(over, career.cargo[g]); career.cargo[g] -= n; over -= n; }
         Banner($"You take command of the {player.C.name.ToLower()}. Your old {ShipClass.All[from].name.ToLower()} is scuttled", 5f);
         Debug.Log($"[SG] switched ship {ShipClass.All[from].name} -> {player.C.name} hull={player.hull:F0} hold={career.Hold}/{career.HoldMax}");
@@ -250,7 +281,7 @@ namespace SaltGlory {
       if (digT < 0f) return; digT += dt;
       if (digT > 0.8f && digT - dt <= 0.8f) GameAudio.I?.Play("dig");
       if (digT < 1.8f) return;
-      digT = -1f; treasureGold = Random.Range(700, 1300); career.gold += treasureGold; career.treasures++; career.digActive = false; career.mapPieces = 0;
+      digT = -1f; treasureGold = Random.Range(800, 1201); career.gold += treasureGold; career.treasures++; career.digActive = false; career.mapPieces = 0;
       Fame(20, "treasure"); GameAudio.I?.Play("chest"); GameAudio.I?.Play("coins"); treasureShowUntil = Time.unscaledTime + 4f;
       Banner($"Buried treasure! The chest holds {treasureGold} gold", 6f);
       Debug.Log($"[SG] treasure dug gold+{treasureGold} gold={career.gold} treasures={career.treasures}");

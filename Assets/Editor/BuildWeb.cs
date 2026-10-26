@@ -212,11 +212,11 @@ public static class BuildWeb {
 
   /// <summary>Page hardening (same as Neon Hive): canvas touch-action:none + preventDefault on touch events, no context menu on
   /// the canvas, Space / arrow keys / Tab don't scroll or move focus. Unity still receives all events. Title = Salt and Glory.</summary>
-  static void PatchIndexHtml(string outDir){
+  static void PatchIndexHtml(string outDir, bool qaHook){
     var p = Path.Combine(outDir, "index.html"); if (!File.Exists(p)) return;
     var html = File.ReadAllText(p); if (html.Contains("sg-input-guard")) return;
     html = System.Text.RegularExpressions.Regex.Replace(html, "<title>.*?</title>", "<title>Salt and Glory</title>");
-    const string css = "<style id=\"sg-input-guard-css\">html,body{overscroll-behavior:none;background:#0E343C}#unity-canvas{touch-action:none;-ms-touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;outline:none}</style>";
+    const string css = "<style id=\"sg-input-guard-css\">html,body{overscroll-behavior:none;background:#0E343C}#unity-container.unity-desktop{position:fixed;left:0;top:0;right:0;bottom:0;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center}#unity-canvas{touch-action:none;-ms-touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;outline:none}</style>";
     const string js = @"<script id=""sg-input-guard"">(function(){
   var c=document.getElementById('unity-canvas'); if(!c) return;
   var stop=function(e){ if(e.cancelable) e.preventDefault(); };
@@ -230,7 +230,7 @@ public static class BuildWeb {
   if(!c.hasAttribute('tabindex')) c.setAttribute('tabindex','-1');
   c.addEventListener('pointerdown',function(){ try{ c.focus(); }catch(_){} });
 })();</script>";
-    html = html.Replace(".then((unityInstance) => {", ".then((unityInstance) => { window.sgUnity = unityInstance;");   // lets the smoke test call Game.QAStatus
+    if (qaHook) html = html.Replace(".then((unityInstance) => {", ".then((unityInstance) => { window.sgUnity = unityInstance;");   // dev / SG_QA builds only: the self-check calls Game.QAStatus
     html = html.Replace("</head>", css + "\n  </head>").Replace("</body>", js + "\n  </body>");
     File.WriteAllText(p, html);
   }
@@ -245,13 +245,14 @@ public static class BuildWeb {
       PlayerSettings.WebGL.threadsSupport = false;
       PlayerSettings.productName = "Salt and Glory"; PlayerSettings.companyName = "mikenev";
       PlayerSettings.defaultWebScreenWidth = 1280; PlayerSettings.defaultWebScreenHeight = 720;
-      bool dev = System.Environment.GetEnvironmentVariable("SG_DEV") == "1";
+      bool dev = System.Environment.GetEnvironmentVariable("SG_DEV") == "1", qa = !dev && System.Environment.GetEnvironmentVariable("SG_QA") == "1";   // SG_QA: a release-like build with the QAStatus hook, for the self-check only
       if (dev){ PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.FullWithStacktrace; PlayerSettings.SetStackTraceLogType(LogType.Exception, StackTraceLogType.Full); }
       else { PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly; PlayerSettings.SetStackTraceLogType(LogType.Exception, StackTraceLogType.ScriptOnly); }
-      var outDir = Path.GetFullPath(dev ? "Builds/WebGLDev" : "docs");
-      var r = BuildPipeline.BuildPlayer(new[]{ ScenePath }, outDir, BuildTarget.WebGL, dev ? BuildOptions.Development : BuildOptions.None);
+      var outDir = Path.GetFullPath(dev ? "Builds/WebGLDev" : qa ? "Builds/WebGLQA" : "docs");
+      var r = BuildPipeline.BuildPlayer(new BuildPlayerOptions{ scenes = new[]{ ScenePath }, locationPathName = outDir, target = BuildTarget.WebGL,
+        options = dev ? BuildOptions.Development : BuildOptions.None, extraScriptingDefines = qa ? new[]{ "SG_QA" } : null });
       Debug.Log("BUILD RESULT: " + r.summary.result + " size=" + r.summary.totalSize);
-      if (r.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded){ File.WriteAllText(Path.Combine(outDir, ".nojekyll"), ""); PatchIndexHtml(outDir); code = 0; }
+      if (r.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded){ File.WriteAllText(Path.Combine(outDir, ".nojekyll"), ""); PatchIndexHtml(outDir, dev || qa); code = 0; }
     } catch (System.Exception e){ Debug.LogException(e); }
     if (Application.isBatchMode) EditorApplication.Exit(code);
   }

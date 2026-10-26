@@ -134,7 +134,8 @@ namespace SaltGlory {
     // ---------- input ----------
     void UpdateMenus(Keyboard kb, Gamepad gp){
       bool back = (kb != null && kb.escapeKey.wasPressedThisFrame) || (gp != null && gp.buttonEast.wasPressedThisFrame);
-      if (state == State.Title){ if (back && titleLoad){ titleLoad = false; focus = -1; } MenuInput(kb, gp); return; }
+      if (state != State.Town){ if (back && titleLoad && state == State.Title){ titleLoad = false; focus = -1; } MenuInput(kb, gp); return; }
+      if (back && screen == Page.Log && retireAsk){ retireAsk = false; focus = -1; return; }
       if (back && screen != Page.Hub){ int from = (int)screen; screen = Page.Hub; GameAudio.I?.SetScene(true, false); townMsg = ""; focus = from <= 4 ? from - 1 : from == (int)Page.Log ? 4 : 5; Debug.Log("[SG] town back to hub"); return; }
       MenuInput(kb, gp);
     }
@@ -160,7 +161,7 @@ namespace SaltGlory {
         navDirHeld = d;
       }
       if (navRects.Count == 0) return;
-      if (focus < 0 || focus >= navRects.Count || !navRects[focus].on){ focus = navRects.FindIndex(b => b.on); if (focus < 0) return; if (dx != 0 || dy != 0){ dx = dy = 0; } }
+      if (focus < 0 || focus >= navRects.Count || !navRects[focus].on){ focus = navRects.FindIndex(b => b.on); if (focus < 0) return; }
       if (dx != 0 || dy != 0){
         var c = navRects[focus].r.center; int best = -1; float bs = 1e9f;
         for (int i = 0; i < navRects.Count; i++){
@@ -168,12 +169,12 @@ namespace SaltGlory {
           float along = dx != 0 ? d.x * dx : d.y * dy, across = dx != 0 ? Mathf.Abs(d.y) : Mathf.Abs(d.x);
           if (along <= 1f) continue; float score = along + across * 2.5f; if (score < bs){ bs = score; best = i; }
         }
-        if (best >= 0){ focus = best; Debug.Log($"[SG] menu focus {focus}"); }
+        if (best >= 0){ Debug.Log($"[SG] menu focus {focus} -> {best} ({(dx > 0 ? "right" : dx < 0 ? "left" : dy > 0 ? "down" : "up")})"); focus = best; }
       }
       if (ok){ navActivate = focus; Debug.Log($"[SG] menu press {focus}"); }
     }
     void Go(Page s){
-      screen = s; townMsg = ""; focus = -1; if (s == Page.Tavern) MakeRumours(); if (s == Page.Governor) Promotion();
+      screen = s; townMsg = ""; focus = -1; retireAsk = false; if (s == Page.Tavern) MakeRumours(); if (s == Page.Governor) Promotion();
       GameAudio.I?.SetScene(true, s == Page.Tavern); if (s != Page.Hub && s != Page.Save) GameAudio.I?.Play("door");
       Debug.Log($"[SG] town screen {s} at {Here.name}");
     }
@@ -202,12 +203,23 @@ namespace SaltGlory {
       GUI.color = oc;
       if (focused){ float t = Mathf.Max(3f, 4f * bgK); var gold = new Color(1f, 0.78f, 0.2f); Box(new Rect(r.x - t, r.y - t, r.width + 2 * t, t), gold); Box(new Rect(r.x - t, r.yMax, r.width + 2 * t, t), gold); Box(new Rect(r.x - t, r.y, t, r.height), gold); Box(new Rect(r.xMax, r.y, t, r.height), gold); }
       if (enabled && navActivate == idx){ navActivate = -1; return true; }
-      if (enabled && clickPending && r.Contains(clickPos)){ clickPending = false; focus = idx; return true; }
+      if (enabled && clickPending && r.Contains(clickPos)){ clickPending = false; focus = idx; Debug.Log($"[SG] menu click {idx}"); return true; }
       return false;
     }
     /// <summary>Call at the start of each menu Repaint: the button list is rebuilt as the buttons are drawn.</summary>
     void BeginButtons(){ if (Event.current.type == EventType.Repaint){ navRects.Clear(); btnCount = 0; } }
-    void EndButtons(){ if (Event.current.type == EventType.Repaint){ navActivate = -1; clickPending = false; } }
+    /// <summary>End of the menu Repaint. M4 QA: every menu opens with the focus already on a button (so the first arrow press moves
+    /// it), and when the focused button turns disabled (a repair done, a refit bought) the focus moves to the nearest enabled one.</summary>
+    void EndButtons(){
+      if (Event.current.type != EventType.Repaint) return;
+      if (navRects.Count > 0 && (focus < 0 || focus >= navRects.Count || !navRects[focus].on)){
+        int best = -1; float bd = 1e9f; var c = focus >= 0 && focus < navRects.Count ? navRects[focus].r.center : new Vector2(-1e5f, -1e5f);
+        for (int i = 0; i < navRects.Count; i++){ if (!navRects[i].on) continue; float d = c.x < -1e4f ? i : (navRects[i].r.center - c).sqrMagnitude; if (d < bd){ bd = d; best = i; } }
+        if (best >= 0) focus = best;
+      }
+      if (clickPending) Debug.Log($"[SG] click at {clickPos.x:F0},{clickPos.y:F0} hit no button");   // M4 QA: helps tell a missed click from a lost one
+      navActivate = -1; clickPending = false;
+    }
     Rect R(float x, float y, float w, float h) => new(bgO.x + x * bgK, bgO.y + y * bgK, w * bgK, h * bgK);   // 1280x720 design space, same fit as the backgrounds
     void Background(Texture2D t, float W, float H){
       if (t) GUI.DrawTexture(new Rect(0, 0, W, H), t, ScaleMode.ScaleAndCrop); else Box(new Rect(0, 0, W, H), new Color(0.2f, 0.15f, 0.1f));
@@ -225,6 +237,7 @@ namespace SaltGlory {
       float uk = Mathf.Min(W / 1280f, H / 720f); var keep = (bgK, bgO);
       BeginButtons();
       if (state == State.Title){ TitleGUI(W, H, uk); }
+      else if (state == State.Retired){ RetiredGUI(W, H, uk); }
       else TownGUI(W, H, uk, keep.bgK, keep.bgO);
       EndButtons();
     }
@@ -296,13 +309,14 @@ namespace SaltGlory {
       if (rumours.Count > 0) Label(R(200, 318, 880, 70), rumours[rumourAt % rumours.Count], inkSt, Ink);
       if (Btn(R(200, 400, 280, 56), "Listen for more")){ rumourAt++; Debug.Log("[SG] tavern rumour " + rumours[rumourAt % rumours.Count]); }
       if (Btn(R(500, 400, 360, 56), $"Recruit 10 hands (60 gold)", player.crew < player.Complement)) Recruit();
-      int piece = 120 + 30 * career.mapPieces;
+      int piece = PiecePrice;
       if (Btn(R(880, 400, 200, 56), career.digActive ? "Map complete" : $"Map piece ({piece})", !career.digActive && career.mapPieces < 4 && career.gold >= piece)){
         career.gold -= piece; GameAudio.I?.Play("coins"); GainPiece("tavern"); townMsg = career.digActive ? $"The fourth piece! X marks a beach near {career.digNear}." : $"You buy a piece of the chart ({career.mapPieces} of 4).";
       }
       Label(R(200, 470, 880, 30), $"Crew {player.crew:F0}/{player.Complement}. More hands reload the guns faster and win boarding fights.   Map pieces {career.mapPieces}/4", inkSmall, Ink);
       Msg(R(200, 510, 880, 80));
     }
+    int PiecePrice => 180 + 40 * career.mapPieces;   // M4 balance: 180 + 220 + 260 + 300 = 960 for a whole map (a dig pays 800-1200)
     void GovernorGUI(){
       var n = Here.nation; int ni = (int)n; var tgt = MissionTarget(n);
       Sheet(out _);
@@ -364,7 +378,7 @@ namespace SaltGlory {
       int hc = Mathf.CeilToInt(100f - player.hull) * 3, sc = Mathf.CeilToInt(100f - player.sails) * 2;
       if (Btn(R(200, 370, 330, 56), hc > 0 ? $"Repair hull ({hc} gold)" : "Hull is sound", hc > 0)) Repair(true);
       if (Btn(R(550, 370, 330, 56), sc > 0 ? $"Repair sails ({sc} gold)" : "Sails are sound", sc > 0)) Repair(false);
-      Label(R(200, 432, 880, 24), $"Refit: trade your {player.C.name.ToLower()} (worth {TradeIn()} as she is) for another class. Speed / guns / hold / crew:", inkSmall, Ink);
+      Label(R(200, 432, 880, 24), $"Refit: the shipwright takes your {player.C.name.ToLower()} for {TradeIn()} ({(career.prize ? "a prize: 45" : "75")}% of what she is worth as she is). Speed / guns / hold / crew:", inkSmall, Ink);
       for (int c = 0; c < ShipClass.All.Length; c++){
         var k = ShipClass.All[c]; int cost = k.price - TradeIn();   // negative: the shipwright pays you the difference
         bool can = c != player.cls && career.gold >= cost && career.Hold <= k.hold;
@@ -373,9 +387,11 @@ namespace SaltGlory {
       }
       Msg(R(200, 560, 880, 40));
     }
-    int TradeIn() => Mathf.RoundToInt(player.C.price * 0.6f * (0.5f + 0.5f * player.hull / 100f));
+    /// <summary>M4 balance: a consistent share of the ship's present value (list price, less up to half for hull damage): 75%, or 45%
+    /// for a captured prize (no papers, and she needs a refit).</summary>
+    int TradeIn() => Mathf.RoundToInt(player.C.price * (0.5f + 0.5f * player.hull / 100f) * (career.prize ? 0.45f : 0.75f));
     void Refit(int c, int cost){
-      string from = player.C.name; career.gold -= cost; ApplyClass(player, c); career.shipClass = c; player.hull = player.sails = 100f; player.mastDown = false;
+      string from = player.C.name; career.gold -= cost; ApplyClass(player, c); career.shipClass = c; career.prize = false; player.hull = player.sails = 100f; player.mastDown = false;
       player.crew = Mathf.Min(player.crew, player.Complement); GameAudio.I?.Play("coins");
       townMsg = cost >= 0 ? $"The shipwright refits you into a {player.C.name.ToLower()} for {cost} gold." : $"The shipwright takes your old ship and hands you a {player.C.name.ToLower()} and {-cost} gold."; Debug.Log($"[SG] refit {from} -> {player.C.name} cost={cost} gold={career.gold}");
     }
@@ -416,6 +432,35 @@ namespace SaltGlory {
         GUI.DrawTexture(R(mr.x + ox * mk, mr.y + oy * mk, w * mk, h * mk), t, ScaleMode.StretchToFill);
       }
       if (career.mapPieces == 0 && !career.digActive) Label(R(mr.x, mr.y + mr.height / 2f - 12, mr.width, 24), "(buy pieces in taverns or take them from prizes)", new GUIStyle(inkSmall){ alignment = TextAnchor.MiddleCenter }, Ink);
+      // M4: retire (two steps), and at sea a close button for touch
+      float by = L.yMax - 58, bw = Mathf.Min(170f, L.width / 2f - 6f);
+      if (!retireAsk){
+        if (state == State.Sea && Btn(R(L.x, by, bw, 52), "Close")) CloseLog("button");
+        if (Btn(R(L.x + (state == State.Sea ? bw + 12 : 0), by, bw, 52), "Retire...")){ retireAsk = true; focus = 0; Debug.Log("[SG] retire asked"); }
+      } else {
+        Label(R(L.x, by - 30, L.width, 26), "Hang up your sword? This ends the career.", new GUIStyle(inkSt){ fontStyle = FontStyle.Bold }, Ink);
+        if (Btn(R(L.x, by, bw, 52), "Not yet")){ retireAsk = false; focus = -1; }
+        if (Btn(R(L.x + bw + 12, by, bw, 52), "Retire")) Retire();
+      }
+    }
+    // ---------- M4: retiring ends the career with a final fame score ----------
+    bool retireAsk;
+    void Retire(){
+      ClearFx(); encActive = false; enemy.Hide(); paused = mapOpen = logOpen = boardAsk = retireAsk = false; Time.timeScale = 1f; ptrs.Clear(); digT = -1f;
+      state = State.Retired; focus = -1; GameAudio.I?.SetBattle(false); GameAudio.I?.SetScene(false, false); GameAudio.I?.Play("cheer");
+      Debug.Log($"[SG] retired final fame={career.fame} title={Career.FameTitle(career.fame)} victories={career.victories} captures={career.captures} treasures={career.treasures} gold={career.gold}");
+    }
+    void RetiredGUI(float W, float H, float uk){
+      Background(logTex ? logTex : titleTex, W, H); Box(new Rect(0, 0, W, H), new Color(0.05f, 0.04f, 0.03f, 0.45f));
+      UseUiFit(W, H, uk); PanelBox(R(340, 70, 600, 580));
+      int best = -1, bn = 0; for (int i = 0; i < 4; i++){ int rk = career.Rank(i); if (rk > best){ best = rk; bn = i; } }
+      Label(R(380, 110, 520, 44), "The captain retires", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(34 * uk) }, Ink);
+      Label(R(380, 158, 520, 30), $"Ashore at last, with {career.gold} gold to your name", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleCenter }, Ink);
+      Label(R(380, 206, 520, 30), "Final fame score", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }, Ink);
+      Label(R(380, 236, 520, 80), career.fame.ToString(), new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(64 * uk) }, new Color(0.5f, 0.3f, 0.05f));
+      Label(R(380, 318, 520, 30), $"{Career.FameTitle(career.fame)}" + (best >= 0 ? $"  ·  {Career.Ranks[best]} of {World.NationNames[bn]}" : ""), new GUIStyle(inkSt){ alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }, Ink);
+      Label(R(420, 366, 440, 170), $"Victories at sea  {career.victories}\nShips captured  {career.captures}\nDuels won  {career.duelsWon}\nTreasures found  {career.treasures}\nMissions done  {career.missionsDone}", new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
+      if (Btn(R(490, 560, 300, 60), "Back to the title")){ Debug.Log("[SG] retired -> title"); TownStart(); }
     }
     void SaveGUI(){
       Sheet(out _);
