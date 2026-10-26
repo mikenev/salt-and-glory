@@ -39,6 +39,7 @@ namespace SaltGlory {
     void Start(){
       Application.targetFrameRate = 60;
       World.ApplyPortsJson(portsJson ? portsJson.text : null);
+      LoadArtData();
       World.BuildMask(landMask ? landMask.bytes : null);
       if (seaMat){ seaMat.SetTexture("_LandTex", World.MaskTex); seaMat.SetVector("_LandRect", new Vector4(World.XMin, World.ZMin, World.W, World.H)); }
       player = MakeShip("Your sloop", playerMat); enemy = MakeShip("Ship", playerMat); ApplyClass(player, 0); career.FixUp(World.Ports.Count);

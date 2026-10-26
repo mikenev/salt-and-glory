@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 namespace SaltGlory {
@@ -6,7 +7,38 @@ namespace SaltGlory {
   /// (BuildWeb) and fall back to simple shapes.</summary>
   public partial class Game {
     [Header("M3 art (null = fallback shapes)")]
-    public Texture2D duelDeckTex, captainPlayerTex, captainEnemyTex, chestTex, mapPieceTex, digMarkTex;
+    public Texture2D duelSkyTex, duelSeaTex, duelDeckTex, chestTex, digMarkTex, mapFullTex, logTex;
+    public Texture2D[] captainPlayer = new Texture2D[6], captainEnemy = new Texture2D[6];   // 0 base, 1-4 England / Spain / France / Dutch, 5 pirate
+    public Texture2D[] mapPieceTex = new Texture2D[4], rankTex = new Texture2D[5];
+    public TextAsset stageJson, framesJson, treasureJson, logJson;
+
+    // ---------- Art Dev's layout data (defaults = the values in the M3 JSON files) ----------
+    [System.Serializable] class StageDeck { public float floor_back_y = 335, floor_front_y = 418, stand_line_y = 380, left_rail_inner_x = 270, right_rail_inner_x = 1044; }
+    [System.Serializable] class StageLayer { public string file; public float parallax; }
+    [System.Serializable] class StageFile { public StageDeck deck_pixels_top_left_origin = new(); public float suggested_deck_offset_y = 180; public StageLayer[] layers; }
+    [System.Serializable] class AnimEntry { public string name; public int row, frames; }
+    [System.Serializable] class Fps { public float idle = 8, step = 12, high = 14, mid = 14, low = 14, block = 12, parry = 14, hit = 12, fall = 10; }
+    [System.Serializable] class FramesFile { public AnimEntry[] animations; public Fps suggested_fps = new(); }
+    [System.Serializable] class LogAreas { public float[] left_page, right_page; }
+    [System.Serializable] class LogFile { public LogAreas text_areas_top_left_origin; }
+    [System.Serializable] class MapPiece { public float[] offset_top_left_px, size; }
+    [System.Serializable] class TMapFile { public float[] full_size, x_mark_px_top_left; public MapPiece[] pieces; }
+    StageFile stage = new(); float parSky = 0.1f, parSea = 0.35f, parDeck = 1f;
+    readonly Dictionary<string, (int row, int frames, float fps)> anims = new();
+    Rect logLeft = new(285, 70, 355, 490), logRight = new(665, 70, 365, 490);
+    TMapFile tmap;
+    static T Json<T>(TextAsset a) where T : class { if (!a) return null; try { return JsonUtility.FromJson<T>(a.text); } catch (System.Exception e){ Debug.LogWarning("[SG] json " + a.name + ": " + e.Message); return null; } }
+    void LoadArtData(){
+      var st = Json<StageFile>(stageJson); if (st != null && st.deck_pixels_top_left_origin != null) stage = st;
+      if (stage.layers != null) foreach (var l in stage.layers){ if (l.file.Contains("Sky")) parSky = l.parallax; else if (l.file.Contains("Sea")) parSea = l.parallax; else if (l.file.Contains("Deck")) parDeck = l.parallax; }
+      var fr = Json<FramesFile>(framesJson); var fps = fr?.suggested_fps ?? new Fps();
+      var fpsOf = new Dictionary<string, float>{ ["idle"] = fps.idle, ["step"] = fps.step, ["high"] = fps.high, ["mid"] = fps.mid, ["low"] = fps.low, ["block"] = fps.block, ["parry"] = fps.parry, ["hit"] = fps.hit, ["fall"] = fps.fall };
+      if (fr?.animations != null) foreach (var a in fr.animations) anims[a.name] = (a.row, a.frames, fpsOf.TryGetValue(a.name, out var f) ? f : 12f);
+      var lg = Json<LogFile>(logJson)?.text_areas_top_left_origin;
+      if (lg?.left_page?.Length == 4 && lg.right_page?.Length == 4){ logLeft = Rect.MinMaxRect(lg.left_page[0], lg.left_page[1], lg.left_page[2], lg.left_page[3]); logRight = Rect.MinMaxRect(lg.right_page[0], lg.right_page[1], lg.right_page[2], lg.right_page[3]); }
+      tmap = Json<TMapFile>(treasureJson);
+      Debug.Log($"[SG] art data: stand={stage.deck_pixels_top_left_origin.stand_line_y} rails={stage.deck_pixels_top_left_origin.left_rail_inner_x}-{stage.deck_pixels_top_left_origin.right_rail_inner_x} anims={anims.Count} map={(tmap != null ? tmap.pieces?.Length ?? 0 : 0)}");
+    }
 
     // ---------- prices (M2 QA: no stable money loops) ----------
     const float PricePerUnit = 0.012f, PriceRelax = 480f;   // each unit moves that port's price 1.2%; drifts back with an 8-minute time constant
@@ -39,8 +71,8 @@ namespace SaltGlory {
     bool LawfulPrize => !encPirate && encLegal && career.marque >= 0 && World.AtWar((Nation)career.marque, encNation);
 
     // ---------- duels ----------
-    class Fighter { public float x, act, stagger, blockFrom = -9f, fall = -1f, flashT; public int phase, h = 1, guardH = 1, dir; public bool block; public string flash = ""; }
-    const float DeckL = 10f, ParryWindow = 0.22f, Reach = 2.5f, MinGap = 1.3f;
+    class Fighter { public float x, act, stagger, blockFrom = -9f, fall = -1f, flashT, animT, move; public int phase, h = 1, guardH = 1, dir; public bool block; public string flash = "", anim = "idle"; }
+    const float DeckL = 8f, ParryWindow = 0.22f, Reach = 2.5f, MinGap = 1.3f;
     static readonly float[] Windup = { 0.26f, 0.34f, 0.40f };   // high is the fast slash, low the slow sweep
     static readonly string[] HName = { "HIGH", "MID", "LOW" };
     readonly Fighter dp = new(), de = new();
@@ -56,14 +88,14 @@ namespace SaltGlory {
       GameAudio.I?.Play("grapple"); GameAudio.I?.SetDuel(true);
       state = State.Duel; stateT = 0f; duelT = 0f; duelOver = 0; duelResult = ""; ptrs.Clear(); dStick = dGest = -99;
       // crew sizes set the starting line: more hands push the fight toward the enemy's rail (grape shot pays off here)
-      float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * 3f;
+      float pc = Mathf.Max(1f, player.crew), ec = Mathf.Max(0f, enemy.crew), c = DeckL / 2f + Mathf.Clamp((pc - ec) / (pc + ec), -1f, 1f) * DeckL * 0.3f;
       Init(dp, c - 0.9f, 1); Init(de, c + 0.9f, -1);
       bool war = encWarship || encTreasure;   // the AI captain: warships and treasure guards fight best, merchants worst
       aggr = war ? 0.62f : encPirate ? 0.58f : 0.42f; reactP = war ? 0.55f : encPirate ? 0.48f : 0.35f; parryP = war ? 0.16f : 0.1f; smartP = war ? 0.6f : 0.4f;
       aiT = 1.2f; aiReactAt = -1f;
       Debug.Log($"[SG] boarding {enemy.label} by {src} crew={pc:F0} vs {ec:F0} start={c:F2}");
     }
-    void Init(Fighter f, float x, int dir){ f.x = x; f.dir = dir; f.act = f.stagger = 0f; f.phase = 0; f.h = f.guardH = 1; f.block = false; f.blockFrom = -9f; f.fall = -1f; f.flash = ""; f.flashT = 0f; }
+    void Init(Fighter f, float x, int dir){ f.anim = "idle"; f.animT = f.move = 0f; f.x = x; f.dir = dir; f.act = f.stagger = 0f; f.phase = 0; f.h = f.guardH = 1; f.block = false; f.blockFrom = -9f; f.fall = -1f; f.flash = ""; f.flashT = 0f; }
     static bool Blocks(int attack, int guard) => Mathf.Abs(attack - guard) <= 1;   // high beats a low guard, low beats a high guard
 
     void UpdateDuel(Keyboard kb, Gamepad gp, float dt){
@@ -126,7 +158,7 @@ namespace SaltGlory {
         if (wantBlock && !f.block) f.blockFrom = duelT;
         f.block = wantBlock; f.guardH = stance;
         if (attack && !f.block){ f.phase = 1; f.h = stance; f.act = Windup[stance] * (f == de ? 1.6f : 1f); GameAudio.I?.Play("whoosh"); }   // the AI telegraphs longer
-        f.x += move * f.dir * (f.block ? 1.1f : 2.6f) * dt;
+        f.x += move * f.dir * (f.block ? 1.1f : 2.6f) * dt; f.move = move;
       }
       if (f.dir > 0) f.x = Mathf.Clamp(f.x, 0.25f, o.x - MinGap); else f.x = Mathf.Clamp(f.x, o.x + MinGap, DeckL - 0.25f);
     }
@@ -146,7 +178,7 @@ namespace SaltGlory {
         Flash(d, "HIT"); GameAudio.I?.Play("body"); GameAudio.I?.Clash();
         Debug.Log($"[SG] duel hit {(pl ? "enemy" : "player")} {HName[a.h]} vs {(d.block ? HName[d.guardH] + " guard" : "no guard")} px={dp.x:F2} ex={de.x:F2}");
       }
-      if (d.x < 0f || d.x > DeckL){ d.fall = 0f; GameAudio.I?.Play("overboard"); Debug.Log($"[SG] duel {(pl ? "enemy" : "player")} captain overboard"); }
+      if (d.x < 0f || d.x > DeckL){ d.fall = 0f; d.x = Mathf.Clamp(d.x, 0f, DeckL); GameAudio.I?.Play("overboard"); Debug.Log($"[SG] duel {(pl ? "enemy" : "player")} captain overboard"); }
     }
     void Flash(Fighter f, string s){ f.flash = s; f.flashT = 0.7f; }
     public string DuelStatus() => state != State.Duel ? "" :
@@ -224,60 +256,87 @@ namespace SaltGlory {
       Debug.Log($"[SG] treasure dug gold+{treasureGold} gold={career.gold} treasures={career.treasures}");
     }
 
-    // ---------- duel GUI (side-on stage; placeholder shapes until Art Dev's deck and captains land) ----------
+    // ---------- duel GUI: Art Dev's three-layer parallax stage and captain sheets on a side-on stage camera ----------
+    // The fighting area runs from just inside the left rail to just short of the cannon at the back right of the deck
+    // (it stands inside the right rail), so a captain pushed off on the right goes over the side clear of it.
+    const float CannonLeftX = 880f, CaptainScale = 1.25f;
+    float DeckPx(float x, float camX){ var d = stage.deck_pixels_top_left_origin; float l = d.left_rail_inner_x + 30f, r = Mathf.Min(d.right_rail_inner_x - 30f, CannonLeftX - 115f); /* a flipped captain's coat and fall frames reach ~105 px behind the pivot */ return l + x / DeckL * (r - l) - camX; }
     void DuelGUI(float s, float W, float H){
       Styles(s); float uk = Mathf.Min(W / 1280f, H / 720f); UseUiFit(W, H, uk); BeginButtons();
-      // the stage: deck art if present, else sky, sea, the deck, its rails and the mast
-      if (duelDeckTex) GUI.DrawTexture(new Rect(0, 0, W, H), duelDeckTex, ScaleMode.ScaleAndCrop);
-      else {
+      var d = stage.deck_pixels_top_left_origin; float off = stage.suggested_deck_offset_y, standY = d.stand_line_y + off;
+      float camX = Mathf.Clamp(((dp.x + de.x) / 2f - DeckL / 2f) / DeckL * (DeckPx(DeckL, 0) - DeckPx(0, 0)) * 0.5f, -60f, 60f);   // the stage camera follows the fight a little
+      Box(new Rect(0, 0, W, H), new Color(0.13f, 0.38f, 0.42f));
+      if (duelSkyTex && duelDeckTex){
+        GUI.DrawTexture(R(-64 - camX * parSky, 0, 1408, 720), duelSkyTex, ScaleMode.StretchToFill);
+        if (duelSeaTex) GUI.DrawTexture(R(-64 - camX * parSea, 0, 1408, 720), duelSeaTex, ScaleMode.StretchToFill);
+        GUI.DrawTexture(R(-camX * parDeck, off, 1280, 720), duelDeckTex, ScaleMode.StretchToFill);
+      } else {   // fallback: sky, sea, the deck and its rails
         for (int i = 0; i < 12; i++) Box(new Rect(0, H * 0.55f * i / 12f, W, H * 0.55f / 12f + 1), Color.Lerp(new Color(0.55f, 0.72f, 0.82f), new Color(0.92f, 0.86f, 0.72f), i / 11f));
-        Box(new Rect(0, H * 0.55f, W, H * 0.45f), new Color(0.13f, 0.38f, 0.42f));
-        Box(R(110, 470, 1060, 70), new Color(0.48f, 0.32f, 0.18f)); for (int i = 0; i < 4; i++) Box(R(110, 482 + i * 15, 1060, 2), new Color(0.32f, 0.2f, 0.1f));
-        Box(R(96, 380, 20, 160), new Color(0.36f, 0.23f, 0.12f)); Box(R(1164, 380, 20, 160), new Color(0.36f, 0.23f, 0.12f));
-        Box(R(96, 380, 90, 12), new Color(0.36f, 0.23f, 0.12f)); Box(R(1094, 380, 90, 12), new Color(0.36f, 0.23f, 0.12f));
-        Box(R(630, 40, 22, 432), new Color(0.4f, 0.26f, 0.14f)); Box(R(520, 120, 240, 150), new Color(0.95f, 0.92f, 0.82f, 0.9f));
+        Box(R(DeckPx(0, camX) - 60, standY - 20, DeckPx(DeckL, camX) - DeckPx(0, camX) + 120, 70), new Color(0.48f, 0.32f, 0.18f));
+        Box(R(DeckPx(0, camX) - 70, standY - 110, 16, 150), new Color(0.36f, 0.23f, 0.12f)); Box(R(DeckPx(DeckL, camX) + 54, standY - 110, 16, 150), new Color(0.36f, 0.23f, 0.12f));
       }
-      DrawFighter(dp, new Color(0.2f, 0.32f, 0.6f), captainPlayerTex); DrawFighter(de, encPirate ? new Color(0.2f, 0.2f, 0.2f) : World.NationColor[(int)encNation], captainEnemyTex);
-      // header: who, crews; the position bar shows how close each captain is to the rail
+      DrawFighter(dp, new Color(0.2f, 0.32f, 0.6f), Sheet(captainPlayer, career.marque >= 0 ? career.marque + 1 : 0), camX, standY);
+      DrawFighter(de, encPirate ? new Color(0.2f, 0.2f, 0.2f) : World.NationColor[(int)encNation], Sheet(captainEnemy, encPirate ? 5 : (int)encNation + 1), camX, standY);
+      // header: who, crews
       PanelBox(R(320, 10, 640, 120));
       Label(R(360, 34, 560, 34), $"Boarding the {enemy.label}", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(24 * uk) }, Ink);
       Label(R(360, 70, 560, 26), $"Your crew {player.crew:F0}  vs  theirs {enemy.crew:F0}", new GUIStyle(inkSt){ alignment = TextAnchor.MiddleCenter }, Ink);
-      Label(R(40, 650, 1200, 50), "A/D step  ·  W, Space or S + J: high, mid or low attack  ·  hold K block, tap K just before a hit to parry  ·  Esc pause\nGamepad: stick + X attack, B block  ·  Touch: drag on the left to step, swipe up / across / down to attack, hold to block, tap to parry",
+      Box(R(0, 652, 1280, 68), new Color(0.05f, 0.04f, 0.03f, 0.55f));
+      Label(R(40, 660, 1200, 50), "A/D step  ·  W, Space or S + J: high, mid or low attack  ·  hold K block, tap K just before a hit to parry  ·  Esc pause\nGamepad: stick + X attack, B block  ·  Touch: drag on the left to step, swipe up / across / down to attack, hold to block, tap to parry",
         new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(14 * uk) }, Parchment);
       if (duelOver > 0 && duelT - duelOverT > 1.2f){
-        PanelBox(R(290, 180, 700, 300));
-        Label(R(330, 214, 620, 44), duelOver == 1 ? "Victory!" : "Defeat", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(34 * uk) }, Ink);
-        Label(R(340, 262, 600, 100), duelResult, new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
+        PanelBox(R(290, 160, 700, 300));
+        Label(R(330, 194, 620, 44), duelOver == 1 ? "Victory!" : "Defeat", new GUIStyle(inkBig){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(34 * uk) }, Ink);
+        Label(R(340, 242, 600, 100), duelResult, new GUIStyle(inkSt){ alignment = TextAnchor.UpperCenter }, Ink);
         if (duelOver == 1){
-          if (Btn(R(340, 380, 290, 60), $"Keep your {player.C.name.ToLower()}")) FinishBoarding(false);
-          if (Btn(R(650, 380, 290, 60), $"Take the {enemy.C.name.ToLower()} (hold {enemy.C.hold})")) FinishBoarding(true);
-        } else if (Btn(R(490, 380, 300, 60), "Back to sea")) FinishBoarding(false);
+          if (Btn(R(340, 360, 290, 60), $"Keep your {player.C.name.ToLower()}")) FinishBoarding(false);
+          if (Btn(R(650, 360, 290, 60), $"Take the {enemy.C.name.ToLower()} (hold {enemy.C.hold})")) FinishBoarding(true);
+        } else if (Btn(R(490, 360, 300, 60), "Back to sea")) FinishBoarding(false);
       }
       if (paused){ Box(new Rect(0, H * 0.36f, W, 100 * s), new Color(0.05f, 0.04f, 0.03f, 0.6f)); Label(new Rect(0, H * 0.36f + 20 * s, W, 60 * s), "Paused", big, Parchment); }
       EndButtons();
     }
-    void DrawFighter(Fighter f, Color coat, Texture2D tex){
-      float sx = 140f + f.x / DeckL * 1000f, fy = f.fall >= 0f ? Mathf.Min(f.fall, 1.2f) * Mathf.Min(f.fall, 1.2f) * 380f : 0f;
-      float baseY = 478f + fy, lean = f.stagger > 0f ? -f.dir * 8f : 0f; var o = GUI.color; var m = GUI.matrix;
-      if (f.fall >= 0f){ var pv = R(sx, baseY - 60, 0, 0).position; GUIUtility.RotateAroundPivot(-f.dir * f.fall * 120f, pv); }
-      if (tex){ var r = R(sx - 60 + lean, baseY - 170, 120, 170); if (f.dir < 0){ r.x += r.width; r.width = -r.width; } GUI.DrawTexture(r, tex); }
-      else {
-        GUI.color = new Color(0.15f, 0.1f, 0.07f); GUI.DrawTexture(R(sx - 16 + lean, baseY - 52, 12, 52), white); GUI.DrawTexture(R(sx + 4 + lean, baseY - 52, 12, 52), white);   // legs
-        GUI.color = coat; GUI.DrawTexture(R(sx - 20 + lean, baseY - 122, 40, 74), white);   // coat
-        GUI.color = new Color(0.93f, 0.78f, 0.62f); GUI.DrawTexture(R(sx - 15 + lean, baseY - 152, 30, 30), disc);   // head
-        GUI.color = new Color(0.12f, 0.08f, 0.06f); GUI.DrawTexture(R(sx - 22 + lean, baseY - 160, 44, 12), white);   // hat
+    static Texture2D Sheet(Texture2D[] set, int v) => set != null && v < set.Length && set[v] ? set[v] : set != null && set.Length > 0 ? set[0] : null;
+    /// <summary>Which animation a captain plays now, and how far into it (0..1 for one-shots, looping for idle / step).</summary>
+    (string name, float t, bool loop) Pose(Fighter f){
+      if (f.fall >= 0f) return ("fall", f.fall, false);
+      if (f.flashT > 0f && f.flash == "PARRY!") return ("parry", 0.7f - f.flashT, false);
+      if (f.stagger > 0f) return ("hit", 0.9f - f.stagger, false);
+      if (f.phase == 1) return (HName[f.h].ToLower(), Windup[f.h] * (f == de ? 1.6f : 1f) - f.act, false);
+      if (f.phase == 2) return (HName[f.h].ToLower(), 0.3f + (0.3f - f.act), false);   // strike and recovery: the back half of the swing
+      if (f.block) return ("block", duelT - f.blockFrom, false);
+      return Mathf.Abs(f.move) > 0.1f ? ("step", duelT, true) : ("idle", duelT, true);
+    }
+    void DrawFighter(Fighter f, Color coat, Texture2D sheet, float camX, float standY){
+      float sx = DeckPx(f.x, camX), fy = f.fall >= 0f ? Mathf.Min(f.fall, 1.4f) * Mathf.Min(f.fall, 1.4f) * 220f : 0f;   // overboard: down over the side, straight down (clear of the cannon)
+      var o = GUI.color; var m = GUI.matrix;
+      if (sheet && anims.Count > 0){
+        var (name, t, loop) = Pose(f); var a = anims.TryGetValue(name, out var e) ? e : anims["idle"];
+        int fr = Mathf.FloorToInt(Mathf.Max(0f, t) * a.fps); fr = loop ? fr % a.frames : Mathf.Min(fr, a.frames - 1);
+        if (name == "high" || name == "mid" || name == "low"){ float total = Windup[f.h] * (f == de ? 1.6f : 1f) + 0.3f; fr = Mathf.Clamp(Mathf.FloorToInt((f.phase == 1 ? Windup[f.h] * (f == de ? 1.6f : 1f) - f.act : Windup[f.h] * (f == de ? 1.6f : 1f) + 0.3f - f.act) / total * a.frames), 0, a.frames - 1); }
+        float cw = 512f * CaptainScale, ch = 320f * CaptainScale; var r = R(sx - cw / 2f, standY - ch + fy, cw, ch);
+        var uv = new Rect(fr / 7f, 1f - (a.row + 1) / 9f, 1f / 7f, 1f / 9f);
+        if (f.dir < 0){ uv.x += uv.width; uv.width = -uv.width; }   // the sheets face +X: flip for the captain facing left
+        GUI.DrawTextureWithTexCoords(r, sheet, uv);
+      } else {   // fallback shapes
+        float lean = f.stagger > 0f ? -f.dir * 8f : 0f, baseY = standY + fy;
+        GUI.color = new Color(0.15f, 0.1f, 0.07f); GUI.DrawTexture(R(sx - 16 + lean, baseY - 52, 12, 52), white); GUI.DrawTexture(R(sx + 4 + lean, baseY - 52, 12, 52), white);
+        GUI.color = coat; GUI.DrawTexture(R(sx - 20 + lean, baseY - 122, 40, 74), white);
+        GUI.color = new Color(0.93f, 0.78f, 0.62f); GUI.DrawTexture(R(sx - 15 + lean, baseY - 152, 30, 30), disc);
+        GUI.color = new Color(0.12f, 0.08f, 0.06f); GUI.DrawTexture(R(sx - 22 + lean, baseY - 160, 44, 12), white);
+        int h = f.phase > 0 ? f.h : f.guardH; float hy = new[]{ 140f, 100f, 58f }[h];
+        float ang = f.block ? -90f * f.dir : f.phase == 1 ? (h == 0 ? -150f : h == 2 ? 150f : 180f) : f.phase == 2 ? (h == 0 ? -20f : h == 2 ? 20f : 0f) : (h == 0 ? -35f : h == 2 ? 35f : 0f);
+        if (f.dir < 0) ang = 180f - ang;
+        var hand = R(sx + f.dir * 18 + lean, baseY - hy, 0, 0).position;
+        GUI.color = new Color(0.85f, 0.87f, 0.9f); GUIUtility.RotateAroundPivot(ang, hand); GUI.DrawTexture(new Rect(hand.x, hand.y - 2.5f * bgK, 64 * bgK, 5 * bgK), white);
       }
-      // the cutlass: guard (upright at its height), wind-up (drawn back), strike (thrust at its height), idle (forward at mid)
-      int h = f.phase > 0 ? f.h : f.guardH; float hy = new[]{ 140f, 100f, 58f }[h];
-      float ang = f.block ? -90f * f.dir : f.phase == 1 ? (h == 0 ? -150f : h == 2 ? 150f : 180f) : f.phase == 2 ? (h == 0 ? -20f : h == 2 ? 20f : 0f) : (h == 0 ? -35f : h == 2 ? 35f : 0f);
-      if (f.dir < 0) ang = 180f - ang;
-      var hand = R(sx + f.dir * 18 + lean, baseY - hy, 0, 0).position;
-      GUI.color = new Color(0.85f, 0.87f, 0.9f); GUIUtility.RotateAroundPivot(ang, hand); GUI.DrawTexture(new Rect(hand.x, hand.y - 2.5f * bgK, 64 * bgK, 5 * bgK), white);
       GUI.matrix = m; GUI.color = o;
       // telegraph and result text over the head
-      if (f.phase == 1) Label(R(sx - 60, baseY - 200, 120, 26), HName[f.h] + "!", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, new Color(1f, 0.85f, 0.4f));
-      else if (f.block) Label(R(sx - 60, baseY - 200, 120, 26), "guard " + HName[f.guardH].ToLower(), new GUIStyle(small){ alignment = TextAnchor.MiddleCenter }, Parchment);
-      if (f.flashT > 0f) Label(R(sx - 80, baseY - 232, 160, 30), f.flash, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(22 * bgK) }, f.flash == "HIT" ? new Color(1f, 0.45f, 0.35f) : new Color(0.75f, 0.95f, 1f));
+      if (f.fall < 0f){
+        if (f.phase == 1) Label(R(sx - 60, standY - 300, 120, 26), HName[f.h] + "!", new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, new Color(1f, 0.85f, 0.4f));
+        else if (f.block) Label(R(sx - 60, standY - 300, 120, 26), "guard " + HName[f.guardH].ToLower(), new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter }, Parchment);
+        if (f.flashT > 0f) Label(R(sx - 80, standY - 334, 160, 30), f.flash, new GUIStyle(txt){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(22 * bgK) }, f.flash == "HIT" ? new Color(1f, 0.45f, 0.35f) : new Color(0.75f, 0.95f, 1f));
+      }
     }
 
     /// <summary>The chest after a dig (Art Dev's chest if present, else a drawn one).</summary>

@@ -168,14 +168,26 @@ public static class BuildWeb {
     g.flagAnchors[4] = Anchor(aj, "SG_Town_Governor.png");
     // M3 ship classes: Assets/Art/Ships/<Class>/<Class>.fbx (+ <Class>_Albedo.png) when Art Dev delivers them; else the sloop stands in
     g.classModels = new GameObject[ShipClass.All.Length]; g.classMats = new Material[ShipClass.All.Length];
+    g.classModels[0] = sloop; g.classMats[0] = playerMat;
     for (int i = 1; i < ShipClass.All.Length; i++){
       string n = ShipClass.All[i].name, dir = $"Assets/Art/Ships/{n}";
       var fbx = AssetDatabase.LoadAssetAtPath<GameObject>($"{dir}/{n}.fbx"); if (!fbx){ Debug.LogWarning($"[Setup] no model for {n} (sloop placeholder)"); continue; }
       g.classModels[i] = fbx; var alb = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/{n}_Albedo.png"); g.classMats[i] = Mat(n + "Mat", "SaltGlory/Unlit", alb ? alb : albedo, Color.white);
     }
     // M3 duel and treasure art, anywhere under Assets/Art by name (fallback: drawn shapes)
-    g.duelDeckTex = ArtAny("Duel_Deck"); g.captainPlayerTex = ArtAny("Captain_Player"); g.captainEnemyTex = ArtAny("Captain_Enemy");
-    g.chestTex = ArtAny("Treasure_Chest"); g.mapPieceTex = ArtAny("Map_Piece"); g.digMarkTex = ArtAny("Dig_Mark");
+    g.duelSkyTex = ArtAny("SG_Duel_Sky"); g.duelSeaTex = ArtAny("SG_Duel_Sea"); g.duelDeckTex = ArtAny("SG_Duel_Deck");
+    string[] v6 = { "Base", "England", "Spain", "France", "Dutch", "Pirate" };
+    g.captainPlayer = v6.Select(v => ArtAny($"SG_Captain_Player_{v}")).ToArray(); g.captainEnemy = v6.Select(v => ArtAny($"SG_Captain_Enemy_{v}")).ToArray();
+    g.chestTex = ArtAny("SG_Treasure_Chest"); g.digMarkTex = ArtAny("SG_Treasure_DigSpot"); g.mapFullTex = ArtAny("SG_Treasure_Map_Full");
+    g.mapPieceTex = Enumerable.Range(1, 4).Select(i => ArtAny($"SG_Treasure_MapPiece_{i}")).ToArray();
+    g.rankTex = Career.Ranks.Select((r, i) => ArtAny($"SG_Icon_Rank_{i + 1}_{r}")).ToArray(); g.logTex = ArtAny("SG_UI_CaptainsLog");
+    g.stageJson = Load<TextAsset>("Assets/Art/Duel/Stage/SG_Duel_Stage.json"); g.framesJson = Load<TextAsset>("Assets/Art/Duel/Captains/SG_Captain_Frames.json");
+    g.treasureJson = Load<TextAsset>("Assets/Art/Treasure/SG_Treasure_Map.json"); g.logJson = Load<TextAsset>("Assets/Art/UI/SG_UI_CaptainsLog.json");
+    // nation / pirate albedos per class ([class * 6 + v]); the sloop's too
+    g.shipAlbedo = new Texture2D[ShipClass.All.Length * 6];
+    for (int c = 0; c < ShipClass.All.Length; c++) for (int v = 0; v < 6; v++){
+      string n = ShipClass.All[c].name; g.shipAlbedo[c * 6 + v] = Load<Texture2D>($"Assets/Art/Ships/{n}/{n}_Albedo{(v == 0 ? "" : "_" + v6[v])}.png");
+    }
     g.cargoTex = new Texture2D[5]; for (int i = 0; i < 5; i++) g.cargoTex[i] = Art("Assets/Art/UI", "Icon_Cargo_" + World.Goods[i]);
 
     var ga = new GameObject("GameAudio").AddComponent<GameAudio>();

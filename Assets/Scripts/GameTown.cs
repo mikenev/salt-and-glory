@@ -387,20 +387,35 @@ namespace SaltGlory {
       townMsg = $"\"For your service, the crown names you {Career.Ranks[rk]}.\" A purse of {purse} gold."; GameAudio.I?.Play("coins");
       Debug.Log($"[SG] promoted {World.Adj[ni]} {Career.Ranks[rk]} purse={purse}");
     }
+    /// <summary>Captain's log: Art Dev's open logbook (full-screen), career on the left page, ranks and the treasure chart on the
+    /// right, in the text areas from SG_UI_CaptainsLog.json. Falls back to the parchment sheet.</summary>
     void LogGUI(){
-      Sheet(out _);
-      Label(R(200, 262, 880, 40), "Captain's log" + (state == State.Sea ? "   (L or Esc to close)" : ""), inkBig, Ink);
-      Label(R(200, 306, 430, 250),
-        $"Fame {career.fame}  ({Career.FameTitle(career.fame)})\n\nShip: {player.C.name}, hull {player.hull:F0}, crew {player.crew:F0}/{player.Complement}, hold {career.Hold}/{career.HoldMax}\n" +
-        $"Victories at sea {career.victories}\nShips captured {career.captures}\nDuels won {career.duelsWon}\nTreasures found {career.treasures}\nMissions done {career.missionsDone}\n" +
-        $"Map pieces {career.mapPieces}/4" + (career.digActive ? $" (dig near {career.digNear})" : ""), inkSt, Ink);
-      Label(R(660, 306, 420, 30), "Rank under letters of marque", new GUIStyle(inkSt){ fontStyle = FontStyle.Bold }, Ink);
+      Rect L, Rr;
+      if (logTex){ GUI.DrawTexture(R(0, 0, 1280, 720), logTex, ScaleMode.StretchToFill); L = logLeft; Rr = logRight; }
+      else { Sheet(out _); L = new Rect(200, 262, 430, 340); Rr = new Rect(660, 262, 420, 340); }
+      Label(R(L.x, L.y, L.width, 36), "Captain's log", new GUIStyle(inkBig){ fontSize = Mathf.RoundToInt(28 * bgK) }, Ink);
+      if (state == State.Sea) Label(R(L.x, L.y + 34, L.width, 22), "L or Esc to close", inkSmall, Ink);
+      Label(R(L.x, L.y + 64, L.width, L.height - 64),
+        $"Fame {career.fame}  ({Career.FameTitle(career.fame)})\n\n{player.C.name}: hull {player.hull:F0}, crew {player.crew:F0}/{player.Complement}\nHold {career.Hold}/{career.HoldMax}, gold {career.gold}\n\n" +
+        $"Victories at sea  {career.victories}\nShips captured  {career.captures}\nDuels won  {career.duelsWon}\nTreasures found  {career.treasures}\nMissions done  {career.missionsDone}", inkSt, Ink);
+      Label(R(Rr.x, Rr.y, Rr.width, 30), "Rank under letters of marque", new GUIStyle(inkSt){ fontStyle = FontStyle.Bold }, Ink);
       for (int i = 0; i < 4; i++){
-        int rk = career.Rank(i), nx = career.NextRankAt(i);
-        Icon(flagIconTex[i], R(660, 344 + i * 46, 32, 32));
-        Label(R(702, 348 + i * 46, 380, 30), rk < 0 ? $"{World.Adj[i]}: no commission" : $"{World.Adj[i]}: {Career.Ranks[rk]}  ({career.service[i]}{(nx > 0 ? "/" + nx : "")})" + (career.marque == i ? "  · marque" : ""), inkSt, Ink);
+        int rk = career.Rank(i), nx = career.NextRankAt(i); float y = Rr.y + 36 + i * 50;
+        Icon(rk >= 0 && rankTex[rk] ? rankTex[rk] : flagIconTex[i], R(Rr.x, y, 44, 44)); Icon(flagIconTex[i], R(Rr.x + 50, y + 10, 24, 24));
+        Label(R(Rr.x + 80, y + 10, Rr.width - 80, 30), rk < 0 ? $"{World.Adj[i]}: no commission" : $"{World.Adj[i]}: {Career.Ranks[rk]} ({career.service[i]}{(nx > 0 ? "/" + nx : "")})" + (career.marque == i ? " · marque" : ""), inkSmall, Ink);
       }
-      Label(R(660, 532, 420, 60), "Service comes from lawful prizes, captures and missions for your patron. Higher rank pays better missions.", inkSmall, Ink);
+      // the treasure chart: the pieces you hold, reassembled; the whole map once it is complete
+      float my = Rr.y + 250, mh = Rr.yMax - my - 26, fw = 1024f, fh = 768f; if (tmap?.full_size?.Length == 2){ fw = tmap.full_size[0]; fh = tmap.full_size[1]; }
+      float mk = Mathf.Min(mh / fh, Rr.width / fw); var mr = new Rect(Rr.x + (Rr.width - fw * mk) / 2f, my, fw * mk, fh * mk);
+      Label(R(Rr.x, my - 26, Rr.width, 24), career.digActive ? $"Treasure map: X near {career.digNear}" : $"Treasure map: {career.mapPieces} of 4 pieces", inkSmall, Ink);
+      if (career.digActive && mapFullTex) GUI.DrawTexture(R(mr.x, mr.y, mr.width, mr.height), mapFullTex, ScaleMode.StretchToFill);
+      else for (int i = 0; i < Mathf.Min(4, career.mapPieces); i++){
+        var pc = tmap?.pieces != null && i < tmap.pieces.Length ? tmap.pieces[i] : null; var t = mapPieceTex[i]; if (!t) continue;
+        float ox = pc?.offset_top_left_px?.Length == 2 ? pc.offset_top_left_px[0] : (i % 2) * fw / 2f, oy = pc?.offset_top_left_px?.Length == 2 ? pc.offset_top_left_px[1] : (i / 2) * fh / 2f;
+        float w = pc?.size?.Length == 2 ? pc.size[0] : t.width, h = pc?.size?.Length == 2 ? pc.size[1] : t.height;
+        GUI.DrawTexture(R(mr.x + ox * mk, mr.y + oy * mk, w * mk, h * mk), t, ScaleMode.StretchToFill);
+      }
+      if (career.mapPieces == 0 && !career.digActive) Label(R(mr.x, mr.y + mr.height / 2f - 12, mr.width, 24), "(buy pieces in taverns or take them from prizes)", new GUIStyle(inkSmall){ alignment = TextAnchor.MiddleCenter }, Ink);
     }
     void SaveGUI(){
       Sheet(out _);
