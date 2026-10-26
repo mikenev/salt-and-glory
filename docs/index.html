@@ -6,7 +6,7 @@
     <title>Salt and Glory</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
-  <style id="sg-input-guard-css">html,body{overscroll-behavior:none;background:#0E343C}#unity-canvas{touch-action:none;-ms-touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;outline:none}</style>
+  <style id="sg-input-guard-css">html,body{overscroll-behavior:none;background:#0E343C}#unity-container.unity-desktop{position:fixed;left:0;top:0;right:0;bottom:0;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center}#unity-canvas{touch-action:none;-ms-touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;outline:none}</style>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -116,7 +116,7 @@
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
           document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-              }).then((unityInstance) => { window.sgUnity = unityInstance;
+              }).then((unityInstance) => {
                 document.querySelector("#unity-loading-bar").style.display = "none";
                 document.querySelector("#unity-fullscreen-button").onclick = () => {
                   unityInstance.SetFullscreen(1);

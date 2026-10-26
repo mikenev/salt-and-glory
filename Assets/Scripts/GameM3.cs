@@ -118,7 +118,7 @@ namespace SaltGlory {
       bool war = encWarship || encTreasure; float cl = enemy.cls / 4f;
       aggr = war ? 0.62f : encPirate ? 0.58f : 0.5f + 0.1f * cl; reactP = war ? 0.55f : encPirate ? 0.48f : 0.5f + 0.2f * cl;
       parryP = war ? 0.16f : encPirate ? 0.1f : 0.12f + 0.1f * cl; smartP = war ? 0.6f : encPirate ? 0.4f : 0.5f + 0.15f * cl;
-      eGrit = 1f / (1f + 0.2f * enemy.cls);
+      eGrit = 1f / (1f + (war || encPirate ? 0.15f : 0.45f) * enemy.cls);   // a fluyt's master takes ~2x the hits of a sloop's
       aiT = 1.2f; aiReactAt = -1f;
       Debug.Log($"[SG] boarding {enemy.label} by {src} crew={pc:F0} vs {ec:F0} start={c:F2}");
     }

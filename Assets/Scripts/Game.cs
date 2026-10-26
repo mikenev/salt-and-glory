@@ -185,7 +185,7 @@ namespace SaltGlory {
       if (state == State.Title || state == State.Town || state == State.Retired){ UpdateMenus(kb, gp); return; }
       bool pauseKey = (kb != null && (kb.escapeKey.wasPressedThisFrame || kb.pKey.wasPressedThisFrame)) || (gp != null && gp.startButton.wasPressedThisFrame);
       bool mapKey = (kb != null && kb.mKey.wasPressedThisFrame) || (gp != null && gp.selectButton.wasPressedThisFrame);
-      bool logKey = (kb != null && kb.lKey.wasPressedThisFrame) || (gp != null && gp.dpad.up.wasPressedThisFrame);
+      bool logKey = (kb != null && kb.lKey.wasPressedThisFrame) || (!logOpen && gp != null && gp.dpad.up.wasPressedThisFrame);   // D-pad up opens the log; inside it, it navigates
       bool backKey = gp != null && gp.buttonEast.wasPressedThisFrame;
       if (boardAsk){ if (pauseKey || backKey || state != State.Sea) CloseAsk(false, "back"); else MenuInput(kb, gp); return; }
       if (mapOpen){ if (mapKey || pauseKey || AnyPress()) SetMap(false, "input"); return; }

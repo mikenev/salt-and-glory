@@ -161,7 +161,9 @@ namespace SaltGlory {
         navDirHeld = d;
       }
       if (navRects.Count == 0) return;
-      if (focus < 0 || focus >= navRects.Count || !navRects[focus].on){ focus = navRects.FindIndex(b => b.on); if (focus < 0) return; }
+      // no focus yet (the menu has not been drawn since it opened): leave it to EndButtons unless a key is pressed now, as the
+      // button list may still be the previous menu's
+      if (focus < 0 || focus >= navRects.Count || !navRects[focus].on){ if (dx == 0 && dy == 0 && !ok) return; focus = navRects.FindIndex(b => b.on); if (focus < 0) return; }
       if (dx != 0 || dy != 0){
         var c = navRects[focus].r.center; int best = -1; float bs = 1e9f;
         for (int i = 0; i < navRects.Count; i++){
