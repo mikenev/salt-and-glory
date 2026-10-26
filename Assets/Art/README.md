@@ -154,3 +154,44 @@ The same data is in `SG_Captain_Frames.json`.
 | Captain's log | `SG_UI_CaptainsLog.png` | Centre | 1280×720 **full-screen background, not 9-slice**: an open blank logbook on a desk. `SG_UI_CaptainsLog.json` gives the text rects for both pages. |
 
 Generator scripts and Blender sources are kept outside the repo, in the art workspace.
+
+## M4: HUD and menu skin, title screen, treasure fragment
+
+These use the same painterly parchment style:
+- The M2 parchment texture is the face of every frame.
+- The wood is the plank paint from the M3 duel deck.
+- The brass studs and rings match the M2/M3 medallion gold.
+
+The art has no text, apart from the logo. Every sprite imports at 100 PPU with no mipmaps and no NPOT resize. Borders and pivots are set in the committed `.meta` files, which were checked in a throwaway Unity 6000.3.26f1 project.
+
+The spec is in **`UI/SG_UI_Skin.json`**. It covers:
+- sizes, pivots and 9-slice borders
+- fill windows, needle pivot and rotation
+- the fragment window
+- suggested HUD anchors
+
+Borders are listed left, bottom, right, top, which is Unity's `spriteBorder` order (x, y, z, w).
+
+### HUD and menu skin (`UI/HUD/`)
+| Piece | File(s) | Size | 9-slice border (L,B,R,T) | Pivot | Notes |
+|---|---|---|---|---|---|
+| Panel | `SG_HUD_Panel.png` | 384² | 64, 64, 64, 64 | centre | Wooden frame with brass corner studs around a parchment face. Content padding is 40. |
+| Button | `SG_HUD_Button_{Normal,Hover,Pressed}.png` | 320×96 | 36, 36, 36, 36 | centre | Hover is warmer and brighter, with a gold inner rule. Pressed is darker, with a top inner shadow; nudge the label down 2 px. |
+| Wind and sail gauge | `SG_HUD_Gauge_Frame.png`, `SG_HUD_Gauge_SailFill.png`, `SG_HUD_Gauge_Needle.png` | 256², 256², 40×184 | none | centre for all three | The frame is a brass compass dial with a red north diamond. The sail fill is a cream ring over the dark track (Image Filled, Radial 360, origin Bottom, clockwise; fillAmount is the sail fraction). The needle is a wind arrow pointing up at 0°. Put its pivot (the hub at the sprite centre, px 20,92 from top-left) on the dial centre and set `localEulerAngles.z = -bearing` with bearing in −180…180. |
+| Hull and crew bars | `SG_HUD_Bar_Frame.png`, `SG_HUD_Bar_Fill_{Hull,Crew}.png` | 512×56, 480×28 | frame: 28, 14, 28, 14 | frame centre; fills left-middle (0, 0.5) | The frame has a dark empty track. The fill window is at x 16, y 14, 480×28 (top-left origin), and stays 16 px in from each end when stretched. Hull is red and crew is blue (Image Filled, Horizontal, origin Left). |
+| Shot-type slot | `SG_HUD_ShotSlot_Back.png`, `SG_HUD_ShotSlot_Frame.png` | 128² | none | centre | A parchment disc goes behind the shot icon and a brass ring frame in front. The icon window is 92 px across. |
+| Gold and cargo readout | `SG_HUD_Readout.png` | 320×80 | 92, 24, 24, 24 | centre | Wooden plaque with a brass coin socket at the left (rect 14,14,52,52 for `SG_Icon_Coin` or a cargo icon). The text area starts at x 94 and grows with width. |
+
+### Title (`Title/`)
+| Piece | File | Size | Pivot | Notes |
+|---|---|---|---|---|
+| Backdrop | `SG_Title_Backdrop.png` | 1280×720 | centre | Full screen, matching the town screens. A ship under full sail at golden hour, with a palm island. The sky in the upper centre is kept calm for the logo, and the sea in the bottom centre for the menu. |
+| Logo | `SG_Title_Logo.png` | 1808×297 | centre | Transparent PNG reading "Salt and Glory", in gold lettering with a dark outline, drop shadow and swash rule. Suggested placement is centred at (640, 190) on a 1280×720 screen, about 760 px wide. |
+
+The logo is set in **Cinzel Decorative Black** (SIL Open Font License 1.1). Its licence is in `LICENSES/CinzelDecorative-OFL.txt`. Only the rendered PNG is shipped; the font file is not in the project.
+
+### Treasure fragment (`Treasure/`)
+| Piece | File | Size | Pivot | Notes |
+|---|---|---|---|---|
+| Fragment template | `SG_Treasure_Fragment_Template.png` | 512² | centre | Torn parchment with a **transparent window** at rect x 112, y 104, 288×288 (top-left origin). Draw the real map region behind it, for example in a RectMask2D of that rect. It has an ink frame line, a dotted trail and a small compass star in the margin. |
+| Red X | `SG_Treasure_X.png` | 96² | centre (the dig spot) | Painted red X, about 60 px across. Place it on the dig spot inside the window. |
