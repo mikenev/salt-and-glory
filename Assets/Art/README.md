@@ -21,8 +21,8 @@ All textures below import as Sprites (no mipmaps, no NPOT resize). Every `.meta`
 ### Map (`Map/`)
 | Piece | Path | Notes |
 |---|---|---|
-| World map | `SG_Map_Caribbean.png` | 2560×1600 hand-drawn chart on the shared parchment. Real coastlines come from Natural Earth 10 m land (public domain), painted with ink outlines, offshore ripple lines, painted hill marks, a compass rose with rhumb lines and a degree-tick border. It has no labels. Covers lon −98…−58 and lat ≈6.8…30.5 (Gulf of Mexico to Barbados, Florida to Panama). Max import size is 4096. |
-| Port coordinates | `SG_Map_Ports.json` | The 11 ports from the plan with nation, lat/lon, pixel position (origin top-left) and UV (origin bottom-left). Data only, not code. |
+| World map | `SG_Map_Caribbean.png` | 2560×1600 hand-drawn chart on the shared parchment. Real coastlines come from Natural Earth 10 m land (public domain), painted with ink outlines, offshore ripple lines, painted hill marks, a compass rose with rhumb lines and a degree-tick border. It has no labels. St. Kitts was widened about 2x across the island chain (same paint) so it reads on the chart and in the land mask. Covers lon −98…−58 and lat ≈6.8…30.5 (Gulf of Mexico to Barbados, Florida to Panama). Max import size is 4096. |
+| Port coordinates | `SG_Map_Ports.json` | The 11 ports from the plan, plus St. Kitts (English, Old Road; added in M2) with nation, lat/lon, pixel position (origin top-left) and UV (origin bottom-left). Data only, not code. |
 | Port marker | `SG_Map_PortMarker.png` | 128² parchment disc with a small fort glyph. |
 | Port marker ring | `SG_Map_PortMarker_Ring.png` | 128² white ring that sits behind the marker. Tint it with the nation colour, for example England red, Spain gold, France blue, Dutch orange. |
 | Ship marker | `SG_Map_ShipMarker.png` | 128² top-down sloop with the bow pointing up (+Y). Rotate it to the heading. |

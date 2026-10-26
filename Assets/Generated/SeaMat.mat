@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _LandTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: a31127072d3ead0f7afbc40bd9a72a36, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -30,6 +34,7 @@ Material:
     m_Ints: []
     m_Floats: []
     m_Colors:
+    - _LandRect: {r: 0, g: 0, b: 1, a: 1}
     - _Rect: {r: 0, g: 0.764, b: 0.39, a: 0.236}
     - _Tile: {r: 38, g: 61, b: 0, a: 0}
     - _Tint: {r: 1.3, g: 1.36, b: 1.32, a: 1}

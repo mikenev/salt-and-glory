@@ -47,6 +47,14 @@ namespace SaltGlory {
       transform.SetPositionAndRotation(new Vector3(pos.x, 0f, pos.z), Quaternion.Euler(0f, hdg, 0f));
     }
 
+    /// <summary>Take the ship off the sea (no encounter).</summary>
+    public void Hide(){ gone = true; sinking = false; gameObject.SetActive(false); }
+    /// <summary>Per-ship tint over the shared material (ships met at sea are tinted by nation until each nation has its own ship art).</summary>
+    public void SetTint(Color c){
+      var mpb = new MaterialPropertyBlock(); mpb.SetColor("_Tint", c);
+      foreach (var r in GetComponentsInChildren<Renderer>(true)) r.SetPropertyBlock(mpb);
+    }
+
     /// <summary>Point-of-sail efficiency. off = angle between the bow and where the wind comes FROM (0 = head to wind, 180 = dead run).</summary>
     public static float WindFactor(float off){
       off = Mathf.Abs(off);

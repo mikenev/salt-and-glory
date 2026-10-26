@@ -54,6 +54,44 @@ public static class BuildWeb {
     m.SetVertices(v); m.SetTriangles(t, 0); m.RecalculateBounds(); return m;
   }
 
+  static Mesh ChainQuad(){   // flat quad (XZ) for the chain-shot sprite: 2.4 m wide across the flight, as seen top-down
+    var m = new Mesh{ name = "ChainQuad" }; float w = 1.2f, d = 0.6f;
+    m.vertices = new[]{ new Vector3(-w, 0, -d), new Vector3(-w, 0, d), new Vector3(w, 0, d), new Vector3(w, 0, -d) };
+    m.uv = new[]{ new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0) };
+    m.triangles = new[]{ 0, 1, 2, 0, 2, 3 }; m.RecalculateBounds(); return m;
+  }
+  /// <summary>Land mask from Art Dev's chart: half resolution (World.MW x World.MH, rows from the south), land where the paint
+  /// is warm (red well above blue: sand, hills and the ink coastline), sea where it is green-blue. The compass rose is cleared.</summary>
+  static TextAsset LandMask(){
+    const string src = "Assets/Art/Map/SG_Map_Caribbean.png", dst = Gen + "/LandMask.bytes";
+    if (!File.Exists(src)){ Debug.LogWarning("[Setup] no chart, land mask falls back to polygons"); return null; }
+    var t = new Texture2D(2, 2); t.LoadImage(File.ReadAllBytes(src)); int w = t.width, h = t.height; var px = t.GetPixels32();
+    int MW = World.MW, MH = World.MH; var b = new byte[MW * MH];
+    for (int y = 0; y < MH; y++) for (int x = 0; x < MW; x++){
+      int sx = x * w / MW, sy = y * h / MH, warm = 0;
+      for (int j = 0; j < 2; j++) for (int i = 0; i < 2; i++){ var c = px[Mathf.Min(h - 1, sy + j) * w + Mathf.Min(w - 1, sx + i)]; if (c.r - c.b > 40) warm++; }
+      float u = (x + 0.5f) / MW, v = 1f - (y + 0.5f) / MH;   // v from the top, like the chart's pixel coordinates
+      bool rose = Mathf.Pow((u - 450f / 2560f) * 2560f, 2) + Mathf.Pow((v - 338f / 1600f) * 1600f, 2) < 150f * 150f;
+      b[y * MW + x] = (byte)(warm >= 2 && !rose ? 255 : 0);
+    }
+    Object.DestroyImmediate(t);
+    File.WriteAllBytes(dst, b); AssetDatabase.ImportAsset(dst); return AssetDatabase.LoadAssetAtPath<TextAsset>(dst);
+  }
+  /// <summary>First texture in a folder whose file name contains the key (so Art Dev's files drop in by name), or null.</summary>
+  static Texture2D Art(string folder, string key){
+    if (!AssetDatabase.IsValidFolder(folder)){ Debug.LogWarning($"[Setup] missing folder {folder} ({key})"); return null; }
+    foreach (var g in AssetDatabase.FindAssets("t:Texture2D", new[]{ folder })){
+      var p = AssetDatabase.GUIDToAssetPath(g); if (Path.GetFileNameWithoutExtension(p).Contains(key)) return AssetDatabase.LoadAssetAtPath<Texture2D>(p);
+    }
+    Debug.LogWarning($"[Setup] no art for {key} in {folder} (fallback)"); return null;
+  }
+  static Vector3 Anchor(string json, string file){
+    var m = System.Text.RegularExpressions.Regex.Match(json ?? "", "\"" + System.Text.RegularExpressions.Regex.Escape(file) + "\"\\s*:\\s*\\{\\s*\"hoist\"\\s*:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\]\\s*,\\s*\"scale\"\\s*:\\s*([\\d.]+)");
+    if (!m.Success){ Debug.LogWarning("[Setup] no flag anchor for " + file); return Vector3.zero; }
+    var ci = System.Globalization.CultureInfo.InvariantCulture;
+    return new Vector3(float.Parse(m.Groups[1].Value, ci), float.Parse(m.Groups[2].Value, ci), float.Parse(m.Groups[3].Value, ci));
+  }
+
   [MenuItem("Salt and Glory/Rebuild Main Scene")]
   public static void SetupScene(){
     Directory.CreateDirectory(Gen); Directory.CreateDirectory("Assets/Scenes");
@@ -66,7 +104,10 @@ public static class BuildWeb {
     var ballMat = Mat("BallMat", "SaltGlory/Unlit", Texture2D.whiteTexture, new Color(0.11f, 0.1f, 0.09f));
     var softMat = Mat("SoftParticle", "SaltGlory/SoftParticle", null, Color.white);
     var seaMat = Mat("SeaMat", "SaltGlory/Sea", frame, new Color(1.3f, 1.36f, 1.32f));
-    var seaMesh = SaveMesh("SeaQuad", SeaQuad(700f)); var ballMesh = SaveMesh("Ball", Sphere(10, 7));
+    var chainTex = Load<Texture2D>("Assets/Art/Projectiles/SG_Shot_Chain.png");
+    var chainMat = chainTex ? Mat("ChainShotMat", "SaltGlory/UnlitAlpha", chainTex, Color.white) : null;
+    var seaMesh = SaveMesh("SeaQuad", SeaQuad(700f)); var ballMesh = SaveMesh("Ball", Sphere(10, 7)); var chainMesh = SaveMesh("ChainQuad", ChainQuad());
+    var landMask = LandMask();
     AssetDatabase.SaveAssets();
 
     var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -83,11 +124,33 @@ public static class BuildWeb {
 
     var g = new GameObject("Game").AddComponent<Game>();
     g.sloopModel = sloop; g.playerMat = playerMat; g.enemyMat = enemyMat; g.ballMat = ballMat; g.softMat = softMat; g.ballMesh = ballMesh;
-    g.cam = cam; g.sea = sea.transform;
+    g.cam = cam; g.sea = sea.transform; g.seaMat = seaMat; g.chainMesh = chainMesh; g.chainMat = chainMat; g.landMask = landMask;
+    // M2 art by file name (Art Dev's M2 set); anything missing stays null and the game falls back
+    g.portsJson = Load<TextAsset>("Assets/Art/Map/SG_Map_Ports.json");
+    g.titleTex = Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_OpenSea.png");
+    g.mapTex = Art("Assets/Art/Map", "SG_Map_Caribbean"); g.portMarkerTex = Art("Assets/Art/Map", "PortMarker"); g.portRingTex = Art("Assets/Art/Map", "PortMarker_Ring");
+    if (g.portMarkerTex == g.portRingTex) g.portMarkerTex = Load<Texture2D>("Assets/Art/Map/SG_Map_PortMarker.png");
+    g.shipMarkerTex = Art("Assets/Art/Map", "ShipMarker");
+    g.panelTex = Art("Assets/Art/UI", "Panel_Parchment"); g.buttonTex = Art("Assets/Art/UI", "Button_Normal"); g.buttonHiTex = Art("Assets/Art/UI", "Button_Highlighted"); g.coinTex = Art("Assets/Art/UI", "Icon_Coin");
+    g.tavernTex = Art("Assets/Art/Towns", "Town_Tavern"); g.governorTex = Art("Assets/Art/Towns", "Town_Governor"); g.merchantTex = Art("Assets/Art/Towns", "Town_Merchant"); g.shipwrightTex = Art("Assets/Art/Towns", "Town_Shipwright");
+    string[] nat = { "England", "Spain", "France", "Dutch" };
+    var anchors = Load<TextAsset>("Assets/Art/Towns/SG_Town_FlagAnchors.json"); var aj = anchors ? anchors.text : "";
+    g.harborTex = new Texture2D[4]; g.flagTex = new Texture2D[4]; g.flagIconTex = new Texture2D[4]; g.flagAnchors = new Vector3[5];
+    for (int i = 0; i < 4; i++){
+      g.harborTex[i] = Art("Assets/Art/Towns", "Harbor_" + nat[i]) ?? Load<Texture2D>("Assets/Art/StyleFrames/SG_StyleFrame_PortTown.png");
+      g.flagTex[i] = Art("Assets/Art/Towns/Flags", "Flag_" + nat[i]); g.flagIconTex[i] = Art("Assets/Art/UI", "Icon_Flag_" + nat[i]);
+      g.flagAnchors[i] = Anchor(aj, $"SG_Harbor_{nat[i]}.png");
+    }
+    g.flagAnchors[4] = Anchor(aj, "SG_Town_Governor.png");
+    g.cargoTex = new Texture2D[5]; for (int i = 0; i < 5; i++) g.cargoTex[i] = Art("Assets/Art/UI", "Icon_Cargo_" + World.Goods[i]);
 
     var ga = new GameObject("GameAudio").AddComponent<GameAudio>();
     ga.music = Load<AudioClip>("Assets/Audio/Music/sailing_loop.ogg"); ga.waves = Load<AudioClip>("Assets/Audio/SFX/ocean_waves_loop.ogg");
     ga.cannon = Load<AudioClip>("Assets/Audio/SFX/cannon_shot.ogg");
+    ga.townMusic = Load<AudioClip>("Assets/Audio/Music/town_loop.ogg"); ga.chatter = Load<AudioClip>("Assets/Audio/SFX/tavern_chatter_loop.ogg");
+    ga.hullHit = Load<AudioClip>("Assets/Audio/SFX/hull_hit.ogg"); ga.splash = Load<AudioClip>("Assets/Audio/SFX/cannonball_splash.ogg");
+    ga.coins = Load<AudioClip>("Assets/Audio/SFX/coins.ogg"); ga.door = Load<AudioClip>("Assets/Audio/SFX/door.ogg"); ga.bell = Load<AudioClip>("Assets/Audio/SFX/ships_bell.ogg");
+    ga.mapUnroll = Load<AudioClip>("Assets/Audio/SFX/map_unroll.ogg"); ga.sailsFilling = Load<AudioClip>("Assets/Audio/SFX/sails_filling.ogg");
 
     EditorSceneManager.SaveScene(scene, ScenePath);
     EditorBuildSettings.scenes = new[]{ new EditorBuildSettingsScene(ScenePath, true) };
@@ -114,6 +177,7 @@ public static class BuildWeb {
   if(!c.hasAttribute('tabindex')) c.setAttribute('tabindex','-1');
   c.addEventListener('pointerdown',function(){ try{ c.focus(); }catch(_){} });
 })();</script>";
+    html = html.Replace(".then((unityInstance) => {", ".then((unityInstance) => { window.sgUnity = unityInstance;");   // lets the smoke test call Game.QAStatus
     html = html.Replace("</head>", css + "\n  </head>").Replace("</body>", js + "\n  </body>");
     File.WriteAllText(p, html);
   }
