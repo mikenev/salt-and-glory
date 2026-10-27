@@ -133,6 +133,17 @@ namespace SaltGlory {
     void Init(Fighter f, float x, int dir){ f.anim = "idle"; f.animT = f.move = 0f; f.x = x; f.dir = dir; f.act = f.stagger = 0f; f.phase = 0; f.h = f.guardH = 1; f.block = false; f.blockFrom = -9f; f.fall = -1f; f.flash = ""; f.flashT = 0f; }
     static bool Blocks(int attack, int guard) => Mathf.Abs(attack - guard) <= 1;   // high beats a low guard, low beats a high guard
 
+    /// <summary>Post-launch duel numpad layout, keys 1..9: kind a = attack (h = height), b = block / guard (h = height), s = step (h = -1 back, +1 forward).</summary>
+    static readonly (char kind, int h, string name)[] NumMove = {
+      ('b', 2, "block low"), ('a', 2, "attack low"), ('s', 1, "step forward"),
+      ('s', -1, "step back"), ('b', 1, "block / parry"), ('a', 1, "attack mid"),
+      ('b', 0, "block high"), ('a', 0, "attack high"), ('s', 1, "step forward") };
+    /// <summary>Numpad n or number-row n: held = 0 up, 1 number row, 2 numpad; pressed = went down this frame.</summary>
+    static (int held, bool pressed) NumKey(Keyboard kb, int n){
+      var np = n switch { 1 => kb.numpad1Key, 2 => kb.numpad2Key, 3 => kb.numpad3Key, 4 => kb.numpad4Key, 5 => kb.numpad5Key, 6 => kb.numpad6Key, 7 => kb.numpad7Key, 8 => kb.numpad8Key, _ => kb.numpad9Key };
+      var dg = n switch { 1 => kb.digit1Key, 2 => kb.digit2Key, 3 => kb.digit3Key, 4 => kb.digit4Key, 5 => kb.digit5Key, 6 => kb.digit6Key, 7 => kb.digit7Key, 8 => kb.digit8Key, _ => kb.digit9Key };
+      return (np.isPressed ? 2 : dg.isPressed ? 1 : 0, np.wasPressedThisFrame || dg.wasPressedThisFrame);
+    }
     void UpdateDuel(Keyboard kb, Gamepad gp, float dt){
       duelT += dt;
       if (duelOver > 0){
@@ -146,6 +157,16 @@ namespace SaltGlory {
         if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) move -= 1f; if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) move += 1f;
         if (kb.wKey.isPressed || kb.upArrowKey.isPressed) stance = 0; else if (kb.sKey.isPressed || kb.downArrowKey.isPressed) stance = 2;
         wantBlock |= kb.kKey.isPressed; attack |= kb.jKey.wasPressedThisFrame;
+        // post-launch: the spatial numpad (and the same layout on the number row). Rows are heights; the centre column cuts
+        // (8 high, 2 low) around 5, the universal guard (block, tap to parry); 6 thrusts mid toward the foe on your right;
+        // 7 / 1 guard high / low; 4 steps back, 9 / 3 step forward
+        for (int i = 0; i < 9; i++){
+          var nk = NumKey(kb, i + 1); if (nk.held == 0) continue; var m = NumMove[i];
+          if (nk.pressed) Debug.Log($"[SG] duel key {i + 1} ({(nk.held == 2 ? "numpad" : "number row")}): {m.name}");
+          if (m.kind == 'a'){ if (nk.pressed){ attack = true; attackH = m.h; } }
+          else if (m.kind == 'b'){ wantBlock = true; stance = m.h; }
+          else move += m.h;
+        }
       }
       if (gp != null){
         var st = gp.leftStick.ReadValue(); if (Mathf.Abs(st.x) > 0.3f) move += st.x; if (gp.dpad.left.isPressed) move -= 1f; if (gp.dpad.right.isPressed) move += 1f;
@@ -247,7 +268,7 @@ namespace SaltGlory {
     }
     void Flash(Fighter f, string s){ f.flash = s; f.flashT = 0.7f; }
     public string DuelStatus() => state != State.Duel ? "" :
-      $"px={dp.x:F2} ex={de.x:F2} pph={dp.phase} eph={de.phase} eh={de.h} eact={de.act:F2} eblk={(de.block ? 1 : 0)} eg={de.guardH} over={duelOver}";
+      $"px={dp.x:F2} ex={de.x:F2} pblk={(dp.block ? 1 : 0)} pg={dp.guardH} pph={dp.phase} eph={de.phase} eh={de.h} eact={de.act:F2} eblk={(de.block ? 1 : 0)} eg={de.guardH} over={duelOver}";
 
     void EndDuel(bool won){
       duelOver = won ? 1 : 2; duelOverT = duelT; focus = -1;
@@ -365,7 +386,8 @@ namespace SaltGlory {
         }
       }
       var hb = R(0, 652, 1280, 68); Box(new Rect(0f, hb.y, W, H - hb.y), new Color(0.05f, 0.04f, 0.03f, 0.55f));
-      Label(R(40, 660, 1200, 50), "A/D step  ·  W, Space or S + J: high, mid or low attack  ·  hold K block, tap K just before a hit to parry  ·  Esc pause\nGamepad: stick + X attack, B block  ·  Touch: drag on the left to step, swipe up / across / down or tap the buttons to attack, hold to block, tap to parry",
+      if (!Application.isMobilePlatform && Time.unscaledTime - lastTouch > 5f) NumpadCard(R(30, 526, 222, 118), uk);   // post-launch: the numpad layout, drawn as a keypad
+      Label(R(40, 654, 1200, 64), "Numpad or number row: 8 / 6 / 2 cut high / thrust mid / cut low  ·  5 block (tap = parry)  ·  7 / 1 guard high / low  ·  4 step back  ·  9 / 3 step forward  ·  Esc pause\nAlso A/D step, W/S + J attack, hold K block  ·  Gamepad: stick + X attack, B block\nTouch: drag on the left to step, swipe up / across / down or tap the buttons to attack, hold to block, tap to parry",
         new GUIStyle(small){ alignment = TextAnchor.MiddleCenter, fontSize = Mathf.RoundToInt(14 * uk) }, Parchment);
       if (result){
         PanelBox(R(290, 8, 700, 300));
@@ -378,6 +400,20 @@ namespace SaltGlory {
       }
       if (paused){ Box(new Rect(0, H * 0.36f, W, 100 * s), new Color(0.05f, 0.04f, 0.03f, 0.6f)); Label(new Rect(0, H * 0.36f + 20 * s, W, 60 * s), "Paused", big, Parchment); }
       EndButtons();
+    }
+    /// <summary>The duel numpad as a little keypad (7 8 9 on top), each key with its number and move; lit while held.</summary>
+    void NumpadCard(Rect r, float uk){
+      Box(r, new Color(0.05f, 0.04f, 0.03f, 0.6f)); var kb = Keyboard.current;
+      string[] shortName = { "Guard L", "Cut low", "Fwd >", "< Back", "Block", "Thrust", "Guard H", "Cut high", "Fwd >" };
+      float cw = (r.width - 8f * uk) / 3f, ch = (r.height - 8f * uk) / 3f;
+      var ns = new GUIStyle(small){ alignment = TextAnchor.UpperLeft, fontStyle = FontStyle.Bold, fontSize = Mathf.RoundToInt(12 * uk) };
+      var ls = new GUIStyle(small){ alignment = TextAnchor.LowerCenter, fontSize = Mathf.RoundToInt(12 * uk) };
+      for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++){
+        int n = (2 - row) * 3 + col + 1; var m = NumMove[n - 1]; bool held = kb != null && NumKey(kb, n).held > 0;
+        var c = new Rect(r.x + 4f * uk + col * cw + 2f, r.y + 4f * uk + row * ch + 2f, cw - 4f, ch - 4f);
+        Box(c, held ? new Color(0.95f, 0.75f, 0.3f, 0.9f) : m.kind == 'a' ? new Color(0.55f, 0.18f, 0.12f, 0.85f) : m.kind == 'b' ? new Color(0.18f, 0.3f, 0.5f, 0.85f) : new Color(0.3f, 0.26f, 0.2f, 0.85f));
+        Label(new Rect(c.x + 3f, c.y + 1f, c.width, c.height), n.ToString(), ns, Parchment); Label(new Rect(c.x, c.y, c.width, c.height - 1f), shortName[n - 1], ls, Parchment);
+      }
     }
     static Texture2D Sheet(Texture2D[] set, int v) => set != null && v < set.Length && set[v] ? set[v] : set != null && set.Length > 0 ? set[0] : null;
     /// <summary>Which animation a captain plays now, and how far into it (0..1 for one-shots, looping for idle / step).</summary>
